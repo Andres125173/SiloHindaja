@@ -18,7 +18,8 @@ main{max-width:920px;margin:0 auto;padding:14px 12px 60px} .card{background:var(
 h1{font-size:24px;margin:2px 0 8px;color:var(--green2)} h2{font-size:18px;margin:0 0 10px;color:var(--green2)} h3{font-size:16px;margin:16px 0 8px}
 .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px} @media(max-width:620px){.row{grid-template-columns:1fr}}
 label{font-size:13px;font-weight:650;display:block;margin:0 0 5px} input,select,textarea,button{font:inherit} input[type=text],input[type=number],select,textarea{width:100%;min-height:44px;padding:10px;border:1px solid #b9c8c1;border-radius:9px;background:#fff;font-size:16px} textarea{min-height:120px}
-.actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0} button,.filebtn{min-height:44px;border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center} .primary{background:var(--green);color:#fff} .secondary{background:#e6f1ec;color:#064c3b} .danger{background:#fff1f0;color:var(--bad);border:1px solid #f3c5c0}
+	.actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0} button,.filebtn{min-height:44px;border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center} .primary{background:var(--green);color:#fff} .secondary{background:#e6f1ec;color:#064c3b} .danger{background:#fff1f0;color:var(--bad);border:1px solid #f3c5c0}
+	.assignment-list{display:grid;gap:8px;margin-top:10px}.assignment-row{display:grid;grid-template-columns:minmax(80px,.55fr) minmax(0,1.45fr);gap:8px;align-items:center;padding:8px;background:#f7faf8;border:1px solid var(--line);border-radius:9px}.assignment-row label{margin:0}.sample-chooser{padding:10px;margin-bottom:12px;background:#eef5f1;border-radius:10px}.sample-chooser label{color:var(--green2)}
 .filebtn input{display:none} .note{font-size:13px;color:var(--muted);line-height:1.45} .status{padding:10px;border-radius:9px;background:#eef5f1;font-size:14px;white-space:pre-wrap}
 .grid{display:grid;grid-template-columns:1.5fr .8fr .8fr;gap:7px;align-items:center} .grid .head{font-weight:700;font-size:12px;color:var(--muted)} .grid input{min-width:0} .sectiontag{grid-column:1/-1;background:#eef5f1;padding:8px;border-radius:8px;font-weight:800;color:var(--green2);margin-top:8px}
 .result{font-size:28px;font-weight:850} .grade-good{color:var(--good)} .grade-warn{color:var(--warn)} .grade-bad{color:var(--bad)}
@@ -33,13 +34,15 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{border-bottom:1p
 <header><img src="veskimeister.jpg" alt="VESKIMEISTER – tervisliku loomasööda tootja"></header>
 <main>
 <section class="card no-print">
-<h1>SiloHindaja – iPhone v2</h1>
+<h1>SiloHindaja – iPhone v4</h1>
 <div class="row">
-<div><label for="type">Silo liik</label><select id="type"><option>Maisisilo</option><option>Rohusilo</option></select></div>
 <div><label for="farm">Ettevõte / hoidla</label><input id="farm" type="text" placeholder="Ettevõte või hoidla"></div>
 <div><label for="analysis">Analüüsi nr</label><input id="analysis" type="text" placeholder="Analüüsi number"></div>
-<div><label for="column">Prooviveerg</label><input id="column" type="number" min="1" value="1"></div>
+<div><label for="columnCount">Prooviveergude arv lehel</label><input id="columnCount" type="number" min="1" max="20" value="1"></div>
 </div>
+<h2 style="margin-top:14px">Määra iga prooviveeru silo liik</h2>
+<div id="columnAssignments" class="assignment-list"></div>
+<p class="note">Iga veerg võib olla maisisilo, rohusilo või „Ei kasutata“. Mõlemat silo liiki võib olla mitu või üldse mitte.</p>
 </section>
 
 <section class="card no-print" id="installCard">
@@ -68,6 +71,11 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{border-bottom:1p
 
 <section class="card" id="inputCard">
 <h2>2. Kontrolli / sisesta väärtused</h2>
+<div class="sample-chooser no-print">
+<label for="sampleSelect">Praegu hinnatav silo</label>
+<select id="sampleSelect"></select>
+<p class="note" id="sampleSummary" style="margin-bottom:0"></p>
+</div>
 <div class="grid" id="fields"><div class="head">Näitaja</div><div class="head">Väärtus</div><div class="head">Ühik</div></div>
 <div class="actions no-print"><button class="primary" id="calcBtn">ARVUTA HINNANG</button><button class="secondary" id="clearBtn">Tühjenda väärtused</button></div>
 </section>
@@ -90,10 +98,10 @@ const OUTER={A:0.40,B:0.35,C:0.25};
 const LABELS={A:'A. Toiteväärtus',B:'B. Kiu ja tärklise seeduvus',C:'C. Fermentatsioon'};
 const aliases={
 'Kuivaine':['kuivaine','dry matter','trockenmasse','dm'],
-'Toorproteiin':['toorproteiin','crude protein','rohprotein','cp'],
+'Toorproteiin':['toorproteiin','toorprotelin','toorprotelin','crude protein','rohprotein','cp'],
 'Toortuhk':['toortuhk','crude ash','rohasche','ash'],
 'Toorkiud':['toorkiud','crude fiber','crude fibre','rohfas'],
-'Toorrasv':['toorrasv','crude fat','rohfett','ether extract'],
+'Toorrasv':['toorrasv','toorrasy','crude fat','rohfett','ether extract'],
 'Tärklis':['tärklis','starch','stärke','staerke'],
 'NDF':['andfom','ndf'], 'ADF':['adf'],
 'Metaboliseeruv energia':['metaboliseeruv energia','metabolizable energy','metabolisable energy','umsetzbare energie','me'],
@@ -105,38 +113,262 @@ const aliases={
 'Etanool':['etanool','ethanol'], 'NH3-N kogu N-st':['nh3-n','ammonia','ammoniaak','ammoniak'], 'Hapete summa':['hapete summa','kokku happeid','total acids','sum acids']
 };
 let currentType='Maisisilo';
+let samples=[];
+let activeColumn=null;
 const $=id=>document.getElementById(id);
 function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ä/g,'a').replace(/ö/g,'o').replace(/ü/g,'u').replace(/õ/g,'o')}
 function parseNum(s){if(s==null)return null; const m=String(s).replace(/\s/g,'').replace(',','.').match(/[-+]?\d+(?:\.\d+)?/); if(!m)return null; const v=Number(m[0]); return Number.isFinite(v)?v:null}
 function grade(p){return p>=3.5?'VÄGA HEA':p>=2.75?'HEA':p>=2?'KESKMINE':'HALB'}
 function score(c,v){if(v>=c.a1&&v<=c.a2)return 4;if(v>=c.b1&&v<=c.b2)return 3;if(v>=c.c1&&v<=c.c2)return 2;return 1}
 function typeCriteria(){return CRITERIA.filter(c=>c.type===currentType)}
+function sampleLabel(sample){return `Veerg ${sample.column} – ${sample.type}`}
+function getAssignments(){
+  return [...document.querySelectorAll('#columnAssignments select[data-column]')]
+    .map(el=>({column:Number(el.dataset.column),type:el.value}))
+    .filter(x=>x.type==='Maisisilo'||x.type==='Rohusilo');
+}
+function saveActiveValues(){
+  if(activeColumn==null)return;
+  const sample=samples.find(x=>x.column===activeColumn);
+  if(sample)sample.values=getValues();
+}
+function renderSampleSelect(){
+  const select=$('sampleSelect');
+  if(!samples.length){
+    select.innerHTML='<option value="">Ühtegi siloveergu pole valitud</option>';
+    select.disabled=true;
+    $('sampleSummary').textContent='Määra ülal vähemalt üks prooviveerg maisi- või rohusiloks.';
+    return;
+  }
+  select.disabled=false;
+  select.innerHTML=samples.map(s=>`<option value="${s.column}">${sampleLabel(s)}</option>`).join('');
+}
+function activateSample(column,save=true){
+  if(save)saveActiveValues();
+  const sample=samples.find(x=>x.column===Number(column));
+  if(!sample)return;
+  activeColumn=sample.column;
+  currentType=sample.type;
+  $('sampleSelect').value=String(sample.column);
+  const count=sample.detectedCount;
+  $('sampleSummary').textContent=count==null
+    ?`${sampleLabel(sample)}. Sisesta väärtused käsitsi või loe foto/PDF.`
+    :`${sampleLabel(sample)}. Automaatselt tuvastatud näitajaid: ${count}.`;
+  renderFields(sample.values||{});
+  $('resultCard').hidden=true;
+}
+function syncSamplesFromAssignments(){
+  saveActiveValues();
+  const old=new Map(samples.map(s=>[s.column,s]));
+  const previous=activeColumn;
+  samples=getAssignments().map(a=>{
+    const prior=old.get(a.column);
+    return {column:a.column,type:a.type,values:prior?.values||{},detectedCount:prior?.detectedCount};
+  });
+  activeColumn=null;
+  renderSampleSelect();
+  if(samples.length)activateSample(samples.some(s=>s.column===previous)?previous:samples[0].column,false);
+  else{currentType='Maisisilo';renderFields();$('resultCard').hidden=true;}
+}
+function renderColumnAssignments(){
+  const host=$('columnAssignments');
+  const previous=new Map([...host.querySelectorAll('select[data-column]')].map(el=>[Number(el.dataset.column),el.value]));
+  const count=Math.max(1,Math.min(20,parseInt($('columnCount').value||'1',10)));
+  $('columnCount').value=String(count);
+  host.innerHTML='';
+  for(let column=1;column<=count;column++){
+    const value=previous.has(column)?previous.get(column):(column===1?'Maisisilo':'');
+    host.insertAdjacentHTML('beforeend',`<div class="assignment-row"><label for="columnType${column}">Veerg ${column}</label><select id="columnType${column}" data-column="${column}"><option value="">Ei kasutata</option><option value="Maisisilo"${value==='Maisisilo'?' selected':''}>Maisisilo</option><option value="Rohusilo"${value==='Rohusilo'?' selected':''}>Rohusilo</option></select></div>`);
+  }
+  syncSamplesFromAssignments();
+}
 function renderFields(keep={}){const host=$('fields');host.innerHTML='<div class="head">Näitaja</div><div class="head">Väärtus</div><div class="head">Ühik</div>';let part='';for(const c of typeCriteria()){if(c.part!==part){part=c.part;host.insertAdjacentHTML('beforeend',`<div class="sectiontag">${LABELS[part]}</div>`)}const id='v_'+btoa(unescape(encodeURIComponent(c.name))).replace(/=/g,'');const value=keep[c.name]??'';host.insertAdjacentHTML('beforeend',`<label for="${id}">${c.name}</label><input id="${id}" data-name="${c.name}" inputmode="decimal" type="text" value="${String(value).replace(/"/g,'&quot;')}"><div>${c.unit}</div>`)}}
 function getValues(){const out={};document.querySelectorAll('#fields input[data-name]').forEach(el=>{const v=parseNum(el.value);if(v!==null)out[el.dataset.name]=v});if(out['Piimhape']!=null&&out['Äädikhape']!=null&&out['Äädikhape']!==0)out['Piimhape : äädikhape']=out['Piimhape']/out['Äädikhape'];return out}
-function setValues(vals){document.querySelectorAll('#fields input[data-name]').forEach(el=>{if(vals[el.dataset.name]!=null)el.value=String(Math.round(vals[el.dataset.name]*1000)/1000).replace('.',',')})}
-function extractNumbers(s){return [...String(s).matchAll(/(?<![A-Za-z])[-+]?\d+(?:[\.,]\d+)?/g)].map(m=>parseNum(m[0])).filter(v=>v!==null)}
-function parseText(text,column=1){const lines=text.split(/[\r\n\v\f]+/).map(x=>x.trim()).filter(Boolean);const out={};for(const [name,als] of Object.entries(aliases)){let found=null;for(let i=0;i<lines.length&&found===null;i++){const nl=norm(lines[i]);let idx=-1;let al='';for(const a of als){const na=norm(a);const pos=nl.indexOf(na);if(pos>=0){idx=pos+na.length;al=na;break}}if(idx>=0){let nums=extractNumbers(lines[i].slice(idx));if(nums.length>=column)found=nums[column-1];else{let near=[];for(let j=i+1;j<Math.min(i+9,lines.length);j++){near.push(...extractNumbers(lines[j]));if(near.length>=column){found=near[column-1];break}}}}}if(found!==null)out[name]=found}
+function setValues(vals,clear=false){document.querySelectorAll('#fields input[data-name]').forEach(el=>{if(clear)el.value='';if(vals[el.dataset.name]!=null)el.value=String(Math.round(vals[el.dataset.name]*1000)/1000).replace('.',',')})}
+
+// OCR loeb Eesti Maaülikooli tabelites koma vahel ekslikult sageli märgi ")" või "]".
+// Parandame ainult selgelt numbrilise kuju; ülejäänud teksti ei muudeta.
+function extractNumbers(s){
+  const cleaned=String(s||'')
+    .replace(/[−–—]/g,'-')
+    .replace(/([-+]?\d+)\s*[\)\]]\s*(?:[|Il1])?/g,'$1.1');
+  return [...cleaned.matchAll(/[-+]?\d+(?:[\.,]\d+)?/g)]
+    .map(m=>parseNum(m[0])).filter(v=>v!==null);
+}
+
+const VALUE_RANGES={
+  'Kuivaine':[10,80],'Toorproteiin':[2,35],'Toortuhk':[0,20],
+  'Toorkiud':[3,65],'Toorrasv':[0,15],'Tärklis':[0,700],
+  'NDF':[10,90],'ADF':[5,70],'Metaboliseeruv energia':[5,18],
+  'Orgaanilise aine seeduvus':[20,100],'NDFD30':[0,100],
+  'NDFD48':[0,100],'uNDF240':[0,50],'IVSD7':[0,100],
+  'CSPS/KPS':[0,100],'Ligniin':[0,20],'pH':[2.5,8],
+  'Piimhape':[0,250],'Äädikhape':[0,250],'Propioonhape':[0,100],
+  'Võihape':[0,100],'Etanool':[0,250],'NH3-N kogu N-st':[0,30],
+  'Hapete summa':[0,400]
+};
+const MAY_HAVE_LOST_DECIMAL=new Set([
+  'Kuivaine','Toorproteiin','Toortuhk','Toorkiud','Toorrasv','NDF','ADF',
+  'Metaboliseeruv energia','Orgaanilise aine seeduvus','NDFD30','NDFD48',
+  'uNDF240','IVSD7','CSPS/KPS','Ligniin','pH','NH3-N kogu N-st'
+]);
+
+function aliasEnd(line,alias){
+  const nl=norm(line),na=norm(alias).trim();
+  if(!na)return -1;
+  let from=0;
+  while(from<=nl.length-na.length){
+    const pos=nl.indexOf(na,from);
+    if(pos<0)return -1;
+    const before=pos===0?' ':nl[pos-1],after=nl[pos+na.length]||' ';
+    if(!/[a-z0-9]/.test(before)&&!/[a-z0-9]/.test(after))return pos+na.length;
+    from=pos+1;
+  }
+  return -1;
+}
+function containsKnownLabel(line){
+  return Object.values(aliases).some(als=>als.some(a=>aliasEnd(line,a)>=0));
+}
+function numericOnlyLine(line){
+  if(!extractNumbers(line).length)return false;
+  const rest=norm(line).replace(/[-+]?\d+(?:[\.,]\d+)?/g,'')
+    .replace(/[\s%.,;:|()[\]\-+]/g,'');
+  return !/[a-z]/.test(rest);
+}
+function plausibleValue(name,value){
+  const range=VALUE_RANGES[name];
+  return !range||(value>=range[0]&&value<=range[1]);
+}
+function normalizeOcrValue(name,value){
+  if(value==null||!Number.isFinite(value))return null;
+  if(plausibleValue(name,value))return value;
+  // Kui kümnendkoma kadus (nt 10,5 -> 105), lubame ainult ühe kümnekordse paranduse.
+  const shifted=value/10;
+  if(MAY_HAVE_LOST_DECIMAL.has(name)&&plausibleValue(name,shifted))return shifted;
+  return null;
+}
+function parseText(text,column=1){
+  const lines=String(text||'').split(/[\r\n\v\f]+/).map(x=>x.trim()).filter(Boolean);
+  const out={};
+  column=Math.max(1,Number(column)||1);
+  for(const [name,unsortedAliases] of Object.entries(aliases)){
+    const als=[...unsortedAliases].sort((a,b)=>b.length-a.length);
+    let found=null;
+    for(let i=0;i<lines.length&&found===null;i++){
+      for(const a of als){
+        const end=aliasEnd(lines[i],a);
+        if(end<0)continue;
+        let nums=extractNumbers(lines[i].slice(end));
+        if(nums.length<column){
+          // Tesseract võib panna ühe tabelirea väärtuse järgmisele reale.
+          // Loeme ainult vahetult järgnevaid puhtalt numbrilisi ridu, mitte suvalisi hilisemaid numbreid.
+          const near=[];
+          for(let j=i+1;j<Math.min(lines.length,i+column+2);j++){
+            if(containsKnownLabel(lines[j])||!numericOnlyLine(lines[j]))break;
+            near.push(...extractNumbers(lines[j]));
+            if(near.length>=column)break;
+          }
+          nums=near;
+        }
+        if(nums.length>=column){
+          const candidate=normalizeOcrValue(name,nums[column-1]);
+          if(candidate!==null)found=candidate;
+        }
+        if(found!==null)break;
+      }
+    }
+    if(found!==null)out[name]=found;
+  }
 // Existing EXE behavior: starch is evaluated as g/kg DM; convert an obvious percentage value to g/kg.
 if(out['Tärklis']!=null&&out['Tärklis']<=100)out['Tärklis']*=10;
 if(out['Piimhape']!=null&&out['Äädikhape']!=null&&out['Äädikhape']!==0)out['Piimhape : äädikhape']=out['Piimhape']/out['Äädikhape'];return out}
-function calc(){const vals=getValues(), pcs={},pws={},details=[];let critical=0;for(const c of typeCriteria()){if(vals[c.name]==null)continue;const v=vals[c.name],p=score(c,v),g=grade(p); let crit=false; if(c.name==='Hapete summa' && c.critical){ const highLimit=currentType==='Maisisilo'?120:140; crit=v>highLimit; } else { crit=(p===1&&c.critical); }if(crit)critical++;pcs[c.part]=(pcs[c.part]||0)+p*c.w;pws[c.part]=(pws[c.part]||0)+c.w;details.push({...c,v,p,g,crit})}let num=0,den=0,parts={};for(const part of ['A','B','C']){if(pws[part]>0){parts[part]=pcs[part]/pws[part];num+=parts[part]*OUTER[part];den+=OUTER[part]}}if(!den){$('status').textContent='Sisesta vähemalt üks tulemus.';return}const overall=num/den, computed=grade(overall);let final=computed;if(critical>0){if(overall>=3.5)final='HEA';else if(overall>=2.75)final='KESKMINE';else final='HALB'}const complete=['A','B','C'].every(p=>pws[p]>0);showResults({vals,details,parts,overall,computed,final,critical,complete})}
-function showResults(r){$('resultCard').hidden=false;const fg=$('finalGrade');fg.textContent=r.final;fg.className='result '+(r.final==='HALB'?'grade-bad':(r.final==='KESKMINE'?'grade-warn':'grade-good'));$('scoreLine').textContent=`Arvutuslik hinne: ${r.computed} (${r.overall.toFixed(2).replace('.',',')} p)${r.critical?` · Kriitilisi piiranguid: ${r.critical}`:''}`;$('completeLine').textContent=r.complete?'Staatus: TÄIELIK HINNANG':'Staatus: ESIALGNE – vähemalt ühe osa andmed puuduvad';$('reportMeta').textContent=`Silo: ${currentType} · Analüüsi nr: ${$('analysis').value||'–'} · Ettevõte/hoidla: ${$('farm').value||'–'} · Kuupäev: ${new Date().toLocaleDateString('et-EE')}`;
+function calc(){const vals=getValues();const active=samples.find(s=>s.column===activeColumn);if(active)active.values=vals;const pcs={},pws={},details=[];let critical=0;for(const c of typeCriteria()){if(vals[c.name]==null)continue;const v=vals[c.name],p=score(c,v),g=grade(p); let crit=false; if(c.name==='Hapete summa' && c.critical){ const highLimit=currentType==='Maisisilo'?120:140; crit=v>highLimit; } else { crit=(p===1&&c.critical); }if(crit)critical++;pcs[c.part]=(pcs[c.part]||0)+p*c.w;pws[c.part]=(pws[c.part]||0)+c.w;details.push({...c,v,p,g,crit})}let num=0,den=0,parts={};for(const part of ['A','B','C']){if(pws[part]>0){parts[part]=pcs[part]/pws[part];num+=parts[part]*OUTER[part];den+=OUTER[part]}}if(!den){$('status').textContent='Sisesta vähemalt üks tulemus.';return}const overall=num/den, computed=grade(overall);let final=computed;if(critical>0){if(overall>=3.5)final='HEA';else if(overall>=2.75)final='KESKMINE';else final='HALB'}const complete=['A','B','C'].every(p=>pws[p]>0);showResults({vals,details,parts,overall,computed,final,critical,complete})}
+function showResults(r){$('resultCard').hidden=false;const fg=$('finalGrade');fg.textContent=r.final;fg.className='result '+(r.final==='HALB'?'grade-bad':(r.final==='KESKMINE'?'grade-warn':'grade-good'));$('scoreLine').textContent=`Arvutuslik hinne: ${r.computed} (${r.overall.toFixed(2).replace('.',',')} p)${r.critical?` · Kriitilisi piiranguid: ${r.critical}`:''}`;$('completeLine').textContent=r.complete?'Staatus: TÄIELIK HINNANG':'Staatus: ESIALGNE – vähemalt ühe osa andmed puuduvad';$('reportMeta').textContent=`Silo: ${currentType} · Prooviveerg: ${activeColumn??'–'} · Analüüsi nr: ${$('analysis').value||'–'} · Ettevõte/hoidla: ${$('farm').value||'–'} · Kuupäev: ${new Date().toLocaleDateString('et-EE')}`;
 $('partScores').innerHTML=['A','B','C'].map(p=>r.parts[p]!=null?`<p><strong>${LABELS[p]}:</strong> ${r.parts[p].toFixed(2).replace('.',',')} p – ${grade(r.parts[p])}</p>`:`<p><strong>${LABELS[p]}:</strong> ANDMED PUUDUVAD</p>`).join('');
 $('detailBody').innerHTML=r.details.map(x=>`<tr><td>${x.part}</td><td>${x.name}</td><td>${x.v.toFixed(2).replace('.',',')} ${x.unit}</td><td>${x.p}</td><td>${x.g}</td><td class="${x.crit?'crit':''}">${x.crit?'KRIITILINE':''}</td></tr>`).join('');
 const rec=r.details.filter(x=>x.p<=2).sort((a,b)=>a.p-b.p||a.name.localeCompare(b.name));$('recommendations').innerHTML=rec.length?rec.map(x=>`<p><strong>${x.name}:</strong> ${x.v.toFixed(2).replace('.',',')} ${x.unit} – <span class="${x.crit?'crit':''}">${x.crit?'KRIITILINE PROBLEEM':'VAJAB TÄHELEPANU'}</span>. ${x.comment}</p>`).join(''):'<p>Olulisi 1–2 punkti näitajaid ei ole sisestatud andmete põhjal.</p>';window.scrollTo({top:$('resultCard').offsetTop-70,behavior:'smooth'})}
 function setStatus(t,p){$('status').textContent=t;if(p!=null)$('progressBar').style.width=Math.max(0,Math.min(100,p))+'%'}
 async function ensureTesseract(){if(window.Tesseract)return;setStatus('Laen OCR-moodulit…',5);await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
-async function ocrImage(file){try{await ensureTesseract();setStatus('Loen fotolt teksti…',10);const res=await Tesseract.recognize(file,'eng+deu+est',{logger:m=>{if(m.progress!=null)setStatus('Loen fotolt teksti… '+Math.round(m.progress*100)+'%',10+80*m.progress)}});return res.data.text}catch(e){throw new Error('Foto OCR ei käivitunud. Kontrolli internetiühendust. '+e.message)}}
+async function ocrImage(file){
+  let worker;
+  try{
+    await ensureTesseract();
+    setStatus('Loen fotolt teksti…',10);
+    worker=await Tesseract.createWorker(['eng','deu','est'],Tesseract.OEM.LSTM_ONLY,{logger:m=>{
+      if(m.progress!=null)setStatus('Loen fotolt teksti… '+Math.round(m.progress*100)+'%',10+80*m.progress);
+    }});
+    await worker.setParameters({
+      tessedit_pageseg_mode:Tesseract.PSM.SINGLE_COLUMN,
+      preserve_interword_spaces:'1',
+      user_defined_dpi:'300'
+    });
+    const res=await worker.recognize(file);
+    return res.data.text;
+  }catch(e){
+    throw new Error('Foto OCR ei käivitunud. Kontrolli internetiühendust. '+e.message);
+  }finally{
+    if(worker)await worker.terminate().catch(()=>{});
+  }
+}
 async function loadPdfJs(){return await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/+esm')}
-async function readPdf(file){setStatus('Loen PDF-i…',10);const pdfjs=await loadPdfJs();pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';const data=new Uint8Array(await file.arrayBuffer());const pdf=await pdfjs.getDocument({data}).promise;let text='';for(let i=1;i<=Math.min(pdf.numPages,5);i++){setStatus(`Loen PDF-i lehekülge ${i}/${Math.min(pdf.numPages,5)}…`,10+70*i/Math.min(pdf.numPages,5));const page=await pdf.getPage(i);const tc=await page.getTextContent();text+=tc.items.map(x=>x.str).join(' ')+'\n'}if(text.replace(/\s/g,'').length>80)return text;setStatus('PDF sisaldab vähe loetavat teksti; proovin esimese lehe OCR-i…',40);await ensureTesseract();const page=await pdf.getPage(1);const vp=page.getViewport({scale:1.8});const canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',0.9));return await ocrImage(blob)}
-async function handleFile(file,kind){if(!file)return;try{let text=kind==='pdf'?await readPdf(file):await ocrImage(file);$('ocrPreview').textContent=text||'Teksti ei tuvastatud.';const col=Math.max(1,parseInt($('column').value||'1',10));const vals=parseText(text,col);setValues(vals);const n=Object.keys(vals).length;setStatus(`Valmis. Tuvastasin ${n} näitajat. Kontrolli kollaste/automaatsete väärtuste asemel kõiki numbreid algdokumendiga ja paranda vajadusel.`,100)}catch(e){setStatus('Viga: '+e.message,0)}}
-$('type').addEventListener('change',()=>{const keep=getValues();currentType=$('type').value;renderFields(keep);$('resultCard').hidden=true});$('calcBtn').addEventListener('click',calc);$('clearBtn').addEventListener('click',()=>{renderFields();$('resultCard').hidden=true;$('ocrPreview').textContent='–';setStatus('Väärtused tühjendatud.',0)});$('cameraInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('imageInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('pdfInput').addEventListener('change',e=>handleFile(e.target.files[0],'pdf'));$('printBtn').addEventListener('click',()=>window.print());$('shareBtn').addEventListener('click',async()=>{const text=`VESKIMEISTER – Silo kvaliteedi hinnang
+function pdfItemsToText(items){
+  const rows=[];
+  for(const item of items){
+    const str=String(item.str||'').trim();
+    if(!str)continue;
+    const x=item.transform?.[4]||0,y=item.transform?.[5]||0;
+    let row=rows.find(r=>Math.abs(r.y-y)<=3);
+    if(!row){row={y,items:[]};rows.push(row)}
+    row.items.push({x,str});
+  }
+  return rows.sort((a,b)=>b.y-a.y)
+    .map(r=>r.items.sort((a,b)=>a.x-b.x).map(x=>x.str).join('   ')).join('\n');
+}
+async function readPdf(file){
+  setStatus('Loen PDF-i…',10);
+  const pdfjs=await loadPdfJs();
+  pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+  const data=new Uint8Array(await file.arrayBuffer());
+  const pdf=await pdfjs.getDocument({data}).promise;
+  let text='';
+  for(let i=1;i<=Math.min(pdf.numPages,5);i++){
+    setStatus(`Loen PDF-i lehekülge ${i}/${Math.min(pdf.numPages,5)}…`,10+70*i/Math.min(pdf.numPages,5));
+    const page=await pdf.getPage(i),tc=await page.getTextContent();
+    text+=pdfItemsToText(tc.items)+'\n';
+  }
+  if(text.replace(/\s/g,'').length>80)return text;
+  setStatus('PDF sisaldab vähe loetavat teksti; proovin esimese lehe OCR-i…',40);
+  const page=await pdf.getPage(1),vp=page.getViewport({scale:2.2});
+  const canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;
+  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+  const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',0.94));
+  return await ocrImage(blob);
+}
+async function handleFile(file,kind){
+  if(!file)return;
+  try{
+    const text=kind==='pdf'?await readPdf(file):await ocrImage(file);
+    $('ocrPreview').textContent=text||'Teksti ei tuvastatud.';
+    const assignments=getAssignments();
+    if(!assignments.length){setStatus('Määra enne vähemalt üks veerg maisi- või rohusiloks.',0);return}
+    samples=assignments.map(a=>{
+      const values=parseText(text,a.column);
+      return {...a,values,detectedCount:Object.keys(values).length};
+    });
+    activeColumn=null;
+    renderSampleSelect();
+    activateSample(samples[0].column,false);
+    const total=samples.reduce((sum,s)=>sum+s.detectedCount,0);
+    setStatus(`Valmis. Lugesin ${samples.length} siloveergu ja tuvastasin kokku ${total} näitajat. Vali „Praegu hinnatav silo“, kontrolli väärtused ning arvuta hinnang.`,100);
+  }catch(e){setStatus('Viga: '+e.message,0)}
+}
+$('columnCount').addEventListener('change',renderColumnAssignments);$('columnAssignments').addEventListener('change',syncSamplesFromAssignments);$('sampleSelect').addEventListener('change',e=>activateSample(e.target.value));$('calcBtn').addEventListener('click',calc);$('clearBtn').addEventListener('click',()=>{const sample=samples.find(s=>s.column===activeColumn);if(sample)sample.values={};renderFields();$('resultCard').hidden=true;setStatus('Praeguse prooviveeru väärtused tühjendatud.',0)});$('cameraInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('imageInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('pdfInput').addEventListener('change',e=>handleFile(e.target.files[0],'pdf'));$('printBtn').addEventListener('click',()=>window.print());$('shareBtn').addEventListener('click',async()=>{const text=`VESKIMEISTER – Silo kvaliteedi hinnang
 ${$('reportMeta').textContent}
 Lõpphinne: ${$('finalGrade').textContent}
 ${$('scoreLine').textContent}`;if(navigator.share){try{await navigator.share({title:'Silo kvaliteedi hinnang',text});return}catch(e){}}prompt('Kopeeri hinnangu tekst:',text)});
 $('installHelpBtn')?.addEventListener('click',()=>{const h=$('installHelp');h.hidden=!h.hidden;});
 const standalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
 if(standalone){const ic=$('installCard');if(ic)ic.hidden=true;}
-if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});renderFields();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});renderColumnAssignments();
 </script>
 </body></html>

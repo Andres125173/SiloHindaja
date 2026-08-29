@@ -1,12 +1,29 @@
-VESKIMEISTER – SiloHindaja iPhone v2
+VESKIMEISTER – SiloHindaja iPhone v4
 
-V2 on tehtud võimalikult lihtsaks iPhone'i avakuvale paigaldamiseks.
+V4 on tehtud võimalikult lihtsaks iPhone'i avakuvale paigaldamiseks.
 
 PAIGALDAMINE
 1. Laadi kogu kaust HTTPS veebiserverisse.
 2. Ava index.html iPhone'i Safari kaudu.
 3. Safari Jaga -> Lisa avakuvale -> Lisa.
 4. Edaspidi ava SiloHindaja avakuva ikoonist.
+
+V4 UUENDUSED
+- Ühel foto- või PDF-lehel võib olla kuni 20 prooviveergu.
+- Iga veeru saab eraldi määrata maisisiloks, rohusiloks või valikuga „Ei kasutata“ välja jätta.
+- Maisi- ja rohusiloveerge võib olla mitu või üldse mitte.
+- Programm loeb kõik määratud prooviveerud korraga.
+- „Praegu hinnatav silo“ valikuga saab veerge ükshaaval kontrollida, parandada ja hinnata.
+- Iga prooviveeru käsitsi parandatud väärtused säilivad teisele proovile ümberlülitamisel.
+
+V3 UUENDUSED
+- Foto OCR seob väärtuse nüüd ainult sama näitaja tabelireaga.
+- Analüüsi number ei saa enam sattuda metaboliseeruva energia lahtrisse.
+- Parandatud Eesti Maaülikooli analüüsilehe kümnendkomade lugemist.
+- Lisatud näitajapõhine väärtuste mõistlikkuse kontroll.
+- PDF-i tekst grupeeritakse tabeliridadeks, et prooviveerg töötaks täpsemalt.
+- Uue dokumendi lugemisel kustutatakse varasemad automaatsed väärtused.
+- Veebirakendus kontrollib käivitamisel värskemat versiooni.
 
 V2 UUENDUSED
 - PWA/avakuva paigalduse tugi iPhone'ile.
