@@ -1,0 +1,30 @@
+VESKIMEISTER – SiloHindaja iPhone v2
+
+V2 on tehtud võimalikult lihtsaks iPhone'i avakuvale paigaldamiseks.
+
+PAIGALDAMINE
+1. Laadi kogu kaust HTTPS veebiserverisse.
+2. Ava index.html iPhone'i Safari kaudu.
+3. Safari Jaga -> Lisa avakuvale -> Lisa.
+4. Edaspidi ava SiloHindaja avakuva ikoonist.
+
+V2 UUENDUSED
+- PWA/avakuva paigalduse tugi iPhone'ile.
+- Eraldi 180, 192 ja 512 px rakenduse ikoonid.
+- Paigaldusjuhis otse rakenduses.
+- Võrguühenduseta vahemälu põhifailidele.
+- NDFD30, NDFD48, uNDF240 ja maisisilo IVSD7 ei ole enam automaatselt KRIITILINE.
+- Hapete summa on KRIITILINE ainult liiga kõrgel väärtusel: maisisilo >120 g/kg KA, rohusilo >140 g/kg KA. Liiga madal väärtus võib jääda HALB, kuid ei muutu automaatselt KRIITILISEKS.
+
+FUNKTSIOONID
+- Maisisilo ja rohusilo hindamine.
+- Käsitsi sisestamine.
+- iPhone'i kaameraga foto tegemine / foto valimine.
+- PDF-faili valimine ja tekstilugemine.
+- OCR foto või skaneeritud PDF-i jaoks.
+- Osahinded, lõpphinne, kriitilised piirangud ja soovitused.
+- Prindi / salvesta PDF.
+- iOS jagamisfunktsioon.
+
+OLULINE
+Automaatselt loetud väärtused tuleb enne hindamist algdokumendiga üle kontrollida. Laborite PDF-kujundused erinevad ning OCR võib numbreid või veerge valesti tõlgendada.

@@ -1,0 +1,14 @@
+{
+  "name": "VESKIMEISTER SiloHindaja v2",
+  "short_name": "SiloHindaja",
+  "description": "Maisi- ja rohusilo kvaliteedi hindamine, foto/PDF lugemine ja aruande koostamine.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007f5f",
+  "icons": [
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}
