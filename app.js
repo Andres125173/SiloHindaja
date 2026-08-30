@@ -190,7 +190,7 @@ function parseText(text,column=1){
 if(out['Tärklis']!=null&&out['Tärklis']<=100)out['Tärklis']*=10;
 if(out['Piimhape']!=null&&out['Äädikhape']!=null&&out['Äädikhape']!==0)out['Piimhape : äädikhape']=out['Piimhape']/out['Äädikhape'];return out}
 function calc(){const vals=getValues();const active=samples.find(s=>s.column===activeColumn);if(active)active.values=vals;const pcs={},pws={},details=[];let critical=0;for(const c of typeCriteria()){if(vals[c.name]==null)continue;const v=vals[c.name],p=score(c,v),g=grade(p),crit=(p===1&&c.critical);if(crit)critical++;pcs[c.part]=(pcs[c.part]||0)+p*c.w;pws[c.part]=(pws[c.part]||0)+c.w;details.push({...c,v,p,g,crit})}let num=0,den=0,parts={};for(const part of ['A','B','C']){if(pws[part]>0){parts[part]=pcs[part]/pws[part];num+=parts[part]*OUTER[part];den+=OUTER[part]}}if(!den){$('status').textContent='Sisesta vähemalt üks tulemus.';return}const overall=num/den, computed=grade(overall);let final=computed;if(critical>0){if(overall>=3.5)final='HEA';else if(overall>=2.75)final='KESKMINE';else final='HALB'}const complete=['A','B','C'].every(p=>pws[p]>0);showResults({vals,details,parts,overall,computed,final,critical,complete})}
-function showResults(r){$('resultCard').hidden=false;const fg=$('finalGrade'),finalText=gradeLabel(r.final);fg.textContent=finalText;fg.className='result '+(r.final==='HALB'?'grade-bad':(r.final==='KESKMINE'?'grade-warn':'grade-good'))+(finalText==='PEAKS OLEMA PAREM'?' long-grade':'');$('scoreLine').textContent=`Arvutuslik hinne: ${gradeLabel(r.computed)} (${r.overall.toFixed(2).replace('.',',')} p)${r.critical?` · Kriitilisi piiranguid: ${r.critical}`:''}`;$('completeLine').textContent=r.complete?'Staatus: TÄIELIK HINNANG':'Staatus: ESIALGNE – vähemalt ühe osa andmed puuduvad';$('reportMeta').textContent=`Silo: ${currentType} · Prooviveerg: ${activeColumn??'–'} · Analüüsi nr: ${$('analysis').value||'–'} · Ettevõte/hoidla: ${$('farm').value||'–'} · Kuupäev: ${new Date().toLocaleDateString('et-EE')}`;
+function showResults(r){resetPreparedPdf();$('resultCard').hidden=false;const fg=$('finalGrade'),finalText=gradeLabel(r.final);fg.textContent=finalText;fg.className='result '+(r.final==='HALB'?'grade-bad':(r.final==='KESKMINE'?'grade-warn':'grade-good'))+(finalText==='PEAKS OLEMA PAREM'?' long-grade':'');fg.style.fontSize=finalText==='PEAKS OLEMA PAREM'?'15px':'';$('scoreLine').textContent=`Arvutuslik hinne: ${gradeLabel(r.computed)} (${r.overall.toFixed(2).replace('.',',')} p)${r.critical?` · Kriitilisi piiranguid: ${r.critical}`:''}`;$('completeLine').textContent=r.complete?'Staatus: TÄIELIK HINNANG':'Staatus: ESIALGNE – vähemalt ühe osa andmed puuduvad';$('reportMeta').textContent=`Silo: ${currentType} · Prooviveerg: ${activeColumn??'–'} · Analüüsi nr: ${$('analysis').value||'–'} · Ettevõte/hoidla: ${$('farm').value||'–'} · Kuupäev: ${new Date().toLocaleDateString('et-EE')}`;
 $('partScores').innerHTML=['A','B','C'].map(p=>r.parts[p]!=null?`<p><strong>${LABELS[p]}:</strong> ${r.parts[p].toFixed(2).replace('.',',')} p – ${gradeLabel(grade(r.parts[p]))}</p>`:`<p><strong>${LABELS[p]}:</strong> ANDMED PUUDUVAD</p>`).join('');
 $('detailBody').innerHTML=r.details.map(x=>`<tr><td>${x.part}</td><td>${x.name}</td><td>${x.v.toFixed(2).replace('.',',')} ${x.unit}</td><td>${x.p}</td><td>${gradeLabel(x.g)}</td><td class="${x.crit?'crit':''}">${x.crit?'KRIITILINE':''}</td></tr>`).join('');
 const rec=r.details.filter(x=>x.p<=2).sort((a,b)=>a.p-b.p||a.name.localeCompare(b.name));$('recommendations').innerHTML=rec.length?rec.map(x=>`<p><strong>${x.name}:</strong> ${x.v.toFixed(2).replace('.',',')} ${x.unit} – <span class="${x.crit?'crit':''}">${x.crit?'KRIITILINE PROBLEEM':'VAJAB TÄHELEPANU'}</span>. ${x.comment}</p>`).join(''):'<p>Olulisi 1–2 punkti näitajaid ei ole sisestatud andmete põhjal.</p>';window.scrollTo({top:$('resultCard').offsetTop-70,behavior:'smooth'})}
@@ -283,33 +283,53 @@ function pdfFileName(){
   const farm=($('farm').value||'SiloHindaja').trim().replace(/[^a-zA-Z0-9À-ž_-]+/g,'_').replace(/^_+|_+$/g,'');
   return `${farm||'SiloHindaja'}_silo_hinnang_${new Date().toISOString().slice(0,10)}.pdf`;
 }
+const PDF_MARGIN_MM=20,PDF_CONTENT_WIDTH_MM=170;
 async function makeAddressFreePdf(){
   await ensurePdfMaker();
   const holder=document.createElement('div');holder.className='pdf-holder';
-  const report=$('resultCard').cloneNode(true);report.removeAttribute('hidden');report.classList.add('pdf-export');
+  const report=$('resultCard').cloneNode(true);report.removeAttribute('hidden');report.classList.add('pdf-export');report.style.width=PDF_CONTENT_WIDTH_MM+'mm';report.style.maxWidth=PDF_CONTENT_WIDTH_MM+'mm';
   report.querySelectorAll('.no-print').forEach(el=>el.remove());
   const reportOnly=report.querySelector('.report-only');if(reportOnly)reportOnly.style.display='block';
   holder.appendChild(report);document.body.appendChild(holder);
   try{
     return await window.html2pdf().set({
-      margin:[20,20,20,20],filename:pdfFileName(),
+      margin:[PDF_MARGIN_MM,PDF_MARGIN_MM,PDF_MARGIN_MM,PDF_MARGIN_MM],filename:pdfFileName(),
       image:{type:'jpeg',quality:0.98},
       html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      jsPDF:{unit:'mm',format:[210,297],orientation:'portrait'},
       pagebreak:{mode:['css','legacy']}
     }).from(report).outputPdf('blob');
   }finally{holder.remove()}
 }
+let preparedPdfFile=null,preparedPdfBlobUrl='';
+function resetPreparedPdf(){
+  if(preparedPdfBlobUrl)URL.revokeObjectURL(preparedPdfBlobUrl);
+  preparedPdfFile=null;preparedPdfBlobUrl='';
+  const btn=$('printBtn'),ready=$('pdfReady');
+  if(btn){btn.disabled=false;btn.textContent='Valmista PDF / prindi'}
+  if(ready)ready.hidden=true;
+}
 async function createAndSharePdf(){
-  const btn=$('printBtn'),old=btn.textContent;btn.disabled=true;btn.textContent='Valmistan PDF-i…';
+  const btn=$('printBtn'),ready=$('pdfReady');
+  if(preparedPdfFile){
+    try{
+      const canShareFiles=navigator.share&&(!navigator.canShare||navigator.canShare({files:[preparedPdfFile]}));
+      if(canShareFiles){
+        await navigator.share({title:'Silo kvaliteedi hinnang',files:[preparedPdfFile]});
+      }else{
+        const a=document.createElement('a');a.href=preparedPdfBlobUrl;a.download=preparedPdfFile.name;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+      }
+    }catch(e){if(e.name!=='AbortError')alert('PDF-i avamine ebaõnnestus: '+e.message)}
+    return;
+  }
+  const old=btn.textContent;btn.disabled=true;btn.textContent='Valmistan PDF-i…';
   try{
-    const blob=await makeAddressFreePdf(),name=pdfFileName(),file=new File([blob],name,{type:'application/pdf'});
-    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
-      try{await navigator.share({title:'Silo kvaliteedi hinnang',files:[file]})}catch(e){if(e.name!=='AbortError')throw e}
-    }else{
-      const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
-    }
-  }catch(e){alert('PDF-i valmistamine ebaõnnestus: '+e.message)}finally{btn.disabled=false;btn.textContent=old}
+    const blob=await makeAddressFreePdf(),name=pdfFileName();
+    preparedPdfFile=new File([blob],name,{type:'application/pdf'});
+    preparedPdfBlobUrl=URL.createObjectURL(blob);
+    btn.textContent='Jaga / prindi valmis PDF';
+    if(ready){ready.textContent='PDF on valmis. Puuduta nüüd nuppu „Jaga / prindi valmis PDF“ ja vali „Prindi“ või „Salvesta failidesse“.';ready.hidden=false}
+  }catch(e){btn.textContent=old;alert('PDF-i valmistamine ebaõnnestus: '+e.message)}finally{btn.disabled=false}
 }
 $('columnCount').addEventListener('change',renderColumnAssignments);$('columnAssignments').addEventListener('change',syncSamplesFromAssignments);$('sampleSelect').addEventListener('change',e=>activateSample(e.target.value));$('calcBtn').addEventListener('click',calc);$('clearBtn').addEventListener('click',()=>{const sample=samples.find(s=>s.column===activeColumn);if(sample)sample.values={};renderFields();$('resultCard').hidden=true;setStatus('Praeguse prooviveeru väärtused tühjendatud.',0)});$('cameraInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('imageInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('pdfInput').addEventListener('change',e=>handleFile(e.target.files[0],'pdf'));$('printBtn').addEventListener('click',createAndSharePdf);$('shareBtn').addEventListener('click',async()=>{const text=`VESKIMEISTER – Silo kvaliteedi hinnang
 ${$('reportMeta').textContent}

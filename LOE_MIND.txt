@@ -1,10 +1,22 @@
-VESKIMEISTER – SiloHindaja iPhone v4.1
+VESKIMEISTER – SiloHindaja iPhone v4.3
+
+V4.3 IPHONE'I PDF-I PARANDUS
+- PDF valmistatakse esimese nupuvajutusega valmis.
+- Teise nupuvajutusega avaneb iPhone'i jagamisaken, kust saab valida „Prindi“ või „Salvesta failidesse“.
+- Kaheastmeline avamine väldib iPhone'i Safari teadet „The request is not allowed by the user agent or the platform“.
+- PDF jääb HTTPS-aadressita ning kõigis servades on endiselt 20 mm tühi ruum.
+
+V4.2 VÄLJATRÜKI PARANDUS
+- PDF on sunnitud täpsesse A4 mõõtu 210 × 297 mm.
+- PDF-i sisu laius on 170 mm ja igas servas on 20 mm tühi ruum.
+- „PEAKS OLEMA PAREM“ on nüüd 15 px ning jääb punaseks.
+- Native print kasutab samuti 170 mm laiust keskele paigutatud sisu.
 
 V4.1 GITHUBI PARANDUS
 - Kõik vajalikud failid on ühes kaustas. GitHubis ei ole vaja alamkaustu luua.
 - PDF-i loomise failid on kaasas ning „Valmista PDF / prindi“ töötab iPhone'is.
 - Uus vahemäluversioon sunnib iPhone'i vana väljatrükki uuendama.
-- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.1“ järgi.
+- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.3“ järgi.
 
 V4 on tehtud võimalikult lihtsaks iPhone'i avakuvale paigaldamiseks.
 
