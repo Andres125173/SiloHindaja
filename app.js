@@ -190,18 +190,18 @@ function parseText(text,column=1){
 if(out['Tärklis']!=null&&out['Tärklis']<=100)out['Tärklis']*=10;
 if(out['Piimhape']!=null&&out['Äädikhape']!=null&&out['Äädikhape']!==0)out['Piimhape : äädikhape']=out['Piimhape']/out['Äädikhape'];return out}
 function calc(){const vals=getValues();const active=samples.find(s=>s.column===activeColumn);if(active)active.values=vals;const pcs={},pws={},details=[];let critical=0;for(const c of typeCriteria()){if(vals[c.name]==null)continue;const v=vals[c.name],p=score(c,v),g=grade(p),crit=(p===1&&c.critical);if(crit)critical++;pcs[c.part]=(pcs[c.part]||0)+p*c.w;pws[c.part]=(pws[c.part]||0)+c.w;details.push({...c,v,p,g,crit})}let num=0,den=0,parts={};for(const part of ['A','B','C']){if(pws[part]>0){parts[part]=pcs[part]/pws[part];num+=parts[part]*OUTER[part];den+=OUTER[part]}}if(!den){$('status').textContent='Sisesta vähemalt üks tulemus.';return}const overall=num/den, computed=grade(overall);let final=computed;if(critical>0){if(overall>=3.5)final='HEA';else if(overall>=2.75)final='KESKMINE';else final='HALB'}const complete=['A','B','C'].every(p=>pws[p]>0);showResults({vals,details,parts,overall,computed,final,critical,complete})}
-function showResults(r){$('resultCard').hidden=false;const fg=$('finalGrade');fg.textContent=gradeLabel(r.final);fg.className='result '+(r.final==='HALB'?'grade-bad':(r.final==='KESKMINE'?'grade-warn':'grade-good'));$('scoreLine').textContent=`Arvutuslik hinne: ${gradeLabel(r.computed)} (${r.overall.toFixed(2).replace('.',',')} p)${r.critical?` · Kriitilisi piiranguid: ${r.critical}`:''}`;$('completeLine').textContent=r.complete?'Staatus: TÄIELIK HINNANG':'Staatus: ESIALGNE – vähemalt ühe osa andmed puuduvad';$('reportMeta').textContent=`Silo: ${currentType} · Prooviveerg: ${activeColumn??'–'} · Analüüsi nr: ${$('analysis').value||'–'} · Ettevõte/hoidla: ${$('farm').value||'–'} · Kuupäev: ${new Date().toLocaleDateString('et-EE')}`;
+function showResults(r){$('resultCard').hidden=false;const fg=$('finalGrade'),finalText=gradeLabel(r.final);fg.textContent=finalText;fg.className='result '+(r.final==='HALB'?'grade-bad':(r.final==='KESKMINE'?'grade-warn':'grade-good'))+(finalText==='PEAKS OLEMA PAREM'?' long-grade':'');$('scoreLine').textContent=`Arvutuslik hinne: ${gradeLabel(r.computed)} (${r.overall.toFixed(2).replace('.',',')} p)${r.critical?` · Kriitilisi piiranguid: ${r.critical}`:''}`;$('completeLine').textContent=r.complete?'Staatus: TÄIELIK HINNANG':'Staatus: ESIALGNE – vähemalt ühe osa andmed puuduvad';$('reportMeta').textContent=`Silo: ${currentType} · Prooviveerg: ${activeColumn??'–'} · Analüüsi nr: ${$('analysis').value||'–'} · Ettevõte/hoidla: ${$('farm').value||'–'} · Kuupäev: ${new Date().toLocaleDateString('et-EE')}`;
 $('partScores').innerHTML=['A','B','C'].map(p=>r.parts[p]!=null?`<p><strong>${LABELS[p]}:</strong> ${r.parts[p].toFixed(2).replace('.',',')} p – ${gradeLabel(grade(r.parts[p]))}</p>`:`<p><strong>${LABELS[p]}:</strong> ANDMED PUUDUVAD</p>`).join('');
 $('detailBody').innerHTML=r.details.map(x=>`<tr><td>${x.part}</td><td>${x.name}</td><td>${x.v.toFixed(2).replace('.',',')} ${x.unit}</td><td>${x.p}</td><td>${gradeLabel(x.g)}</td><td class="${x.crit?'crit':''}">${x.crit?'KRIITILINE':''}</td></tr>`).join('');
 const rec=r.details.filter(x=>x.p<=2).sort((a,b)=>a.p-b.p||a.name.localeCompare(b.name));$('recommendations').innerHTML=rec.length?rec.map(x=>`<p><strong>${x.name}:</strong> ${x.v.toFixed(2).replace('.',',')} ${x.unit} – <span class="${x.crit?'crit':''}">${x.crit?'KRIITILINE PROBLEEM':'VAJAB TÄHELEPANU'}</span>. ${x.comment}</p>`).join(''):'<p>Olulisi 1–2 punkti näitajaid ei ole sisestatud andmete põhjal.</p>';window.scrollTo({top:$('resultCard').offsetTop-70,behavior:'smooth'})}
 function setStatus(t,p){$('status').textContent=t;if(p!=null)$('progressBar').style.width=Math.max(0,Math.min(100,p))+'%'}
-async function ensureTesseract(){if(window.Tesseract)return;setStatus('Laen OCR-moodulit…',5);await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
+async function ensureTesseract(){if(window.Tesseract)return;setStatus('Laen OCR-moodulit…',5);await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='./tesseract.min.js';s.onload=()=>window.Tesseract?resolve():reject(new Error('OCR-moodulit ei õnnestunud käivitada.'));s.onerror=()=>reject(new Error('OCR-mooduli kohalik fail puudub.'));document.head.appendChild(s)})}
 async function ocrImage(file){
   let worker;
   try{
     await ensureTesseract();
     setStatus('Loen fotolt teksti…',10);
-    worker=await Tesseract.createWorker(['eng','deu','est'],Tesseract.OEM.LSTM_ONLY,{logger:m=>{
+    worker=await Tesseract.createWorker(['eng','deu','est'],Tesseract.OEM.LSTM_ONLY,{workerPath:'./worker.min.js',corePath:'./',langPath:'./',gzip:true,logger:m=>{
       if(m.progress!=null)setStatus('Loen fotolt teksti… '+Math.round(m.progress*100)+'%',10+80*m.progress);
     }});
     await worker.setParameters({
@@ -212,12 +212,12 @@ async function ocrImage(file){
     const res=await worker.recognize(file);
     return res.data.text;
   }catch(e){
-    throw new Error('Foto OCR ei käivitunud. Kontrolli internetiühendust. '+e.message);
+    throw new Error('Foto OCR ei käivitunud. Sulge ja ava programm uuesti. '+e.message);
   }finally{
     if(worker)await worker.terminate().catch(()=>{});
   }
 }
-async function loadPdfJs(){return await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/+esm')}
+async function loadPdfJs(){return await import('./pdf.mjs')}
 function pdfItemsToText(items){
   const rows=[];
   for(const item of items){
@@ -234,7 +234,7 @@ function pdfItemsToText(items){
 async function readPdf(file){
   setStatus('Loen PDF-i…',10);
   const pdfjs=await loadPdfJs();
-  pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+  pdfjs.GlobalWorkerOptions.workerSrc=new URL('./pdf.worker.min.mjs',document.baseURI).href;
   const data=new Uint8Array(await file.arrayBuffer());
   const pdf=await pdfjs.getDocument({data}).promise;
   let text='';
@@ -269,8 +269,50 @@ async function handleFile(file,kind){
     setStatus(`Valmis. Lugesin ${samples.length} siloveergu ja tuvastasin kokku ${total} näitajat. Vali „Praegu hinnatav silo“, kontrolli väärtused ning arvuta hinnang.`,100);
   }catch(e){setStatus('Viga: '+e.message,0)}
 }
-$('columnCount').addEventListener('change',renderColumnAssignments);$('columnAssignments').addEventListener('change',syncSamplesFromAssignments);$('sampleSelect').addEventListener('change',e=>activateSample(e.target.value));$('calcBtn').addEventListener('click',calc);$('clearBtn').addEventListener('click',()=>{const sample=samples.find(s=>s.column===activeColumn);if(sample)sample.values={};renderFields();$('resultCard').hidden=true;setStatus('Praeguse prooviveeru väärtused tühjendatud.',0)});$('cameraInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('imageInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('pdfInput').addEventListener('change',e=>handleFile(e.target.files[0],'pdf'));$('printBtn').addEventListener('click',()=>window.print());$('shareBtn').addEventListener('click',async()=>{const text=`VESKIMEISTER – Silo kvaliteedi hinnang
+async function ensurePdfMaker(){
+  if(window.html2pdf)return;
+  await new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='./html2pdf.bundle.min.js';
+    s.onload=()=>window.html2pdf?resolve():reject(new Error('PDF-moodulit ei õnnestunud käivitada.'));
+    s.onerror=()=>reject(new Error('PDF-mooduli kohalik fail puudub.'));
+    document.head.appendChild(s);
+  });
+}
+function pdfFileName(){
+  const farm=($('farm').value||'SiloHindaja').trim().replace(/[^a-zA-Z0-9À-ž_-]+/g,'_').replace(/^_+|_+$/g,'');
+  return `${farm||'SiloHindaja'}_silo_hinnang_${new Date().toISOString().slice(0,10)}.pdf`;
+}
+async function makeAddressFreePdf(){
+  await ensurePdfMaker();
+  const holder=document.createElement('div');holder.className='pdf-holder';
+  const report=$('resultCard').cloneNode(true);report.removeAttribute('hidden');report.classList.add('pdf-export');
+  report.querySelectorAll('.no-print').forEach(el=>el.remove());
+  const reportOnly=report.querySelector('.report-only');if(reportOnly)reportOnly.style.display='block';
+  holder.appendChild(report);document.body.appendChild(holder);
+  try{
+    return await window.html2pdf().set({
+      margin:[20,20,20,20],filename:pdfFileName(),
+      image:{type:'jpeg',quality:0.98},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy']}
+    }).from(report).outputPdf('blob');
+  }finally{holder.remove()}
+}
+async function createAndSharePdf(){
+  const btn=$('printBtn'),old=btn.textContent;btn.disabled=true;btn.textContent='Valmistan PDF-i…';
+  try{
+    const blob=await makeAddressFreePdf(),name=pdfFileName(),file=new File([blob],name,{type:'application/pdf'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({title:'Silo kvaliteedi hinnang',files:[file]})}catch(e){if(e.name!=='AbortError')throw e}
+    }else{
+      const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    }
+  }catch(e){alert('PDF-i valmistamine ebaõnnestus: '+e.message)}finally{btn.disabled=false;btn.textContent=old}
+}
+$('columnCount').addEventListener('change',renderColumnAssignments);$('columnAssignments').addEventListener('change',syncSamplesFromAssignments);$('sampleSelect').addEventListener('change',e=>activateSample(e.target.value));$('calcBtn').addEventListener('click',calc);$('clearBtn').addEventListener('click',()=>{const sample=samples.find(s=>s.column===activeColumn);if(sample)sample.values={};renderFields();$('resultCard').hidden=true;setStatus('Praeguse prooviveeru väärtused tühjendatud.',0)});$('cameraInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('imageInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('pdfInput').addEventListener('change',e=>handleFile(e.target.files[0],'pdf'));$('printBtn').addEventListener('click',createAndSharePdf);$('shareBtn').addEventListener('click',async()=>{const text=`VESKIMEISTER – Silo kvaliteedi hinnang
 ${$('reportMeta').textContent}
 Lõpphinne: ${$('finalGrade').textContent}
 ${$('scoreLine').textContent}`;if(navigator.share){try{await navigator.share({title:'Silo kvaliteedi hinnang',text});return}catch(e){}}prompt('Kopeeri hinnangu tekst:',text)});
-if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});renderColumnAssignments();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});renderColumnAssignments();

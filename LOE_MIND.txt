@@ -1,14 +1,24 @@
-VESKIMEISTER – SiloHindaja iPhone v4
+VESKIMEISTER – SiloHindaja iPhone v4.1
+
+V4.1 GITHUBI PARANDUS
+- Kõik vajalikud failid on ühes kaustas. GitHubis ei ole vaja alamkaustu luua.
+- PDF-i loomise failid on kaasas ning „Valmista PDF / prindi“ töötab iPhone'is.
+- Uus vahemäluversioon sunnib iPhone'i vana väljatrükki uuendama.
+- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.1“ järgi.
 
 V4 on tehtud võimalikult lihtsaks iPhone'i avakuvale paigaldamiseks.
 
 PAIGALDAMINE
-1. Laadi kogu kaust HTTPS veebiserverisse.
+1. Paki ZIP lahti ja laadi GitHubi üles kõik lahtipakitud failid.
 2. Ava index.html iPhone'i Safari kaudu.
 3. Safari Jaga -> Lisa avakuvale -> Lisa.
 4. Edaspidi ava SiloHindaja avakuva ikoonist.
 
 V4 UUENDUSED
+- Täielik võrguühenduseta versioon: OCR-i inglise, saksa ja eesti keele andmed, PDF-lugeja ning PDF-looja on paketis kaasas.
+- Väljatrüki ja PDF-i kõigil külgedel on 20 mm tühi veeris.
+- PDF-i jalusesse ei lisata HTTPS-aadressi.
+- Hinne „PEAKS OLEMA PAREM“ on jaotises „3. Hinnang“ väiksema kirjaga, kuid sama punase värviga.
 - Jaotises „3. Hinnang“ kuvatakse hinde „HALB“ asemel „PEAKS OLEMA PAREM“.
 - Ühel foto- või PDF-lehel võib olla kuni 20 prooviveergu.
 - Iga veeru saab eraldi määrata maisisiloks, rohusiloks või valikuga „Ei kasutata“ välja jätta.
@@ -41,7 +51,7 @@ FUNKTSIOONID
 - PDF-faili valimine ja tekstilugemine.
 - OCR foto või skaneeritud PDF-i jaoks.
 - Osahinded, lõpphinne, kriitilised piirangud ja soovitused.
-- Prindi / salvesta PDF.
+- Valmista, jaga või prindi eraldi PDF-fail. PDF-i jalusesse ei lisata veebiaadressi.
 - iOS jagamisfunktsioon.
 
 OLULINE
