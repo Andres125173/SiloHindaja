@@ -1,4 +1,21 @@
-VESKIMEISTER – SiloHindaja iPhone v4.3
+VESKIMEISTER – SiloHindaja iPhone v4.5
+
+V4.5 UUS PDF-MOOTOR
+- Veebilehe pildistamisel põhinenud PDF-i loomine on täielikult asendatud päris teksti, tabelijoonte ja värvide otse PDF-i kirjutamisega.
+- iPhone ei saa enam anda tühja PDF-i peidetud aruandekihi pildistamise vea tõttu.
+- Aruanne mahutatakse kõige rohkem kahele A4-leheküljele; vajaduse korral kohandatakse kirja enne PDF-i loomist.
+- VESKIMEISTER on vasakus ülanurgas 14 pt, rasvane ja tumeroheline.
+- Leheküljenumbrid lisatakse ainult siis, kui aruanne on kahel leheküljel.
+- „PEAKS OLEMA PAREM“ jääb punaseks; kriitilised ja tähelepanu vajavad read saavad eristuva tausta.
+- Kõigis servades on 20 mm tühi ruum ning HTTPS-aadressi PDF-i ei lisata.
+- Uus PDF-mootor on paketis kaasas ja töötab võrguühenduseta.
+
+V4.4 TÜHJADE PDF-LEHTEDE PARANDUS
+- PDF-i aruandekiht ei asu enam iPhone'is lehe taga, mistõttu sisu joonistatakse PDF-i nähtavalt.
+- Aruande teksti suurus ja tabeli reavahed kohandatakse automaatselt nii, et aruanne mahuks kuni kahele A4-lehele.
+- Põhitekst algab ligikaudu 9 punktist; vajaduse korral vähendatakse seda ainult nii palju, kui kahele lehele mahutamiseks vaja.
+- „PEAKS OLEMA PAREM“ jääb punaseks ja 15 px suuruseks.
+- A4 kõigis servades on 20 mm tühi ruum ning HTTPS-aadressi PDF-i ei lisata.
 
 V4.3 IPHONE'I PDF-I PARANDUS
 - PDF valmistatakse esimese nupuvajutusega valmis.
@@ -16,7 +33,7 @@ V4.1 GITHUBI PARANDUS
 - Kõik vajalikud failid on ühes kaustas. GitHubis ei ole vaja alamkaustu luua.
 - PDF-i loomise failid on kaasas ning „Valmista PDF / prindi“ töötab iPhone'is.
 - Uus vahemäluversioon sunnib iPhone'i vana väljatrükki uuendama.
-- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.3“ järgi.
+- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.5“ järgi.
 
 V4 on tehtud võimalikult lihtsaks iPhone'i avakuvale paigaldamiseks.
 
