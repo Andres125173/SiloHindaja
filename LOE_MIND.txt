@@ -1,4 +1,9 @@
-VESKIMEISTER – SiloHindaja iPhone v4.5
+VESKIMEISTER – SiloHindaja iPhone v4.6
+
+V4.6 PÄISEREA JA MÄRKUSE TÄIENDUS
+- PDF-i rida „Silo / Prooviveerg / Analüüsi nr / Ettevõte/hoidla / Koostaja / Kuupäev“ on 11 pt, must ja rasvane.
+- Programmi lisati Koostaja sisestusväli ning koostaja nimi lisatakse samale PDF-i andmereale.
+- Alumisse märkusesse lisati selgitus, et silo hinnang ei võta arvesse võimalikku hallituse ja toksiinide esinemist ning neid tuleb hinnata eraldi sõltuvalt loomaliigist ja vanusest.
 
 V4.5 UUS PDF-MOOTOR
 - Veebilehe pildistamisel põhinenud PDF-i loomine on täielikult asendatud päris teksti, tabelijoonte ja värvide otse PDF-i kirjutamisega.
@@ -33,7 +38,7 @@ V4.1 GITHUBI PARANDUS
 - Kõik vajalikud failid on ühes kaustas. GitHubis ei ole vaja alamkaustu luua.
 - PDF-i loomise failid on kaasas ning „Valmista PDF / prindi“ töötab iPhone'is.
 - Uus vahemäluversioon sunnib iPhone'i vana väljatrükki uuendama.
-- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.5“ järgi.
+- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.6“ järgi.
 
 V4 on tehtud võimalikult lihtsaks iPhone'i avakuvale paigaldamiseks.
 

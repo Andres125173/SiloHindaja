@@ -27,6 +27,7 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{border-bottom:1p
 .progress{height:8px;background:#dce8e2;border-radius:99px;overflow:hidden} .progress>div{height:100%;background:var(--green);width:0}
 #ocrPreview{white-space:pre-wrap;max-height:260px;overflow:auto;background:#fafcfa;border:1px solid var(--line);padding:10px;border-radius:9px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace}
 .report-only{display:none}
+#reportMeta{font-size:11pt;color:#000;font-weight:650;line-height:1.3}
 .pdf-holder{position:absolute;left:0;top:0;width:170mm;z-index:100000;pointer-events:none;background:#fff}
 .pdf-export{width:170mm!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:#fff!important;color:#15221d;font-size:var(--pdf-font-size,12px)!important;line-height:1.22!important}
 .pdf-export .report-only{display:block!important}.pdf-export .no-print{display:none!important}.pdf-export [style*="overflow-x:auto"]{overflow:visible!important}
@@ -47,11 +48,12 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{border-bottom:1p
 <header><img src="veskimeister.jpg" alt="VESKIMEISTER – tervisliku loomasööda tootja"></header>
 <main>
 <section class="card no-print">
-<h1>SiloHindaja – iPhone v4.5</h1>
-<p class="note"><strong>Versioon 4.5 – uus otse teksti kirjutav PDF-mootor; kõige rohkem kaks A4-lehekülge.</strong></p>
+<h1>SiloHindaja – iPhone v4.6</h1>
+<p class="note"><strong>Versioon 4.6 – suurem must päiserida, lisatud koostaja ning hallituse ja toksiinide märkus.</strong></p>
 <div class="row">
 <div><label for="farm">Ettevõte / hoidla</label><input id="farm" type="text" placeholder="Ettevõte või hoidla"></div>
 <div><label for="analysis">Analüüsi nr</label><input id="analysis" type="text" placeholder="Analüüsi number"></div>
+<div><label for="author">Koostaja</label><input id="author" type="text" placeholder="Koostaja nimi"></div>
 <div><label for="columnCount">Prooviveergude arv lehel</label><input id="columnCount" type="number" min="1" max="20" value="1"></div>
 </div>
 <h2 style="margin-top:14px">Määra iga prooviveeru silo liik</h2>
@@ -102,7 +104,7 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{border-bottom:1p
 <div id="partScores"></div>
 <h3>Arvutuskäik</h3><div style="overflow-x:auto"><table><thead><tr><th>Osa</th><th>Näitaja</th><th>Väärtus</th><th>P</th><th>Hinne</th><th></th></tr></thead><tbody id="detailBody"></tbody></table></div>
 <h3>Soovitused ja kommentaarid</h3><div id="recommendations"></div>
-<p class="note">Märkus: hinnang on praktiline otsustustugi. Lõplik söötmisotsus tuleb siduda ratsiooni, kuivaine söömuse, silo hügieeni ja loomade tegeliku reaktsiooniga.</p>
+<p class="note">Märkus: hinnang on praktiline otsustustugi. Lõplik söötmisotsus tuleb siduda ratsiooni, kuivaine söömuse, silo hügieeni ja loomade tegeliku reaktsiooniga. Silo hinnang ei võta arvesse silo võimalikku hallituse ja toksiinide esinemist. Neid tuleb hinnata eraldi sõltuvalt loomaliigist ja vanusest.</p>
 <div class="actions no-print"><button class="primary" id="printBtn">Valmista PDF / prindi</button><button class="secondary" id="shareBtn">Jaga hinnangu teksti</button></div>
 <div class="status no-print" id="pdfReady" hidden></div>
 </section>
@@ -299,7 +301,7 @@ function parseText(text,column=1){
 if(out['Tärklis']!=null&&out['Tärklis']<=100)out['Tärklis']*=10;
 if(out['Piimhape']!=null&&out['Äädikhape']!=null&&out['Äädikhape']!==0)out['Piimhape : äädikhape']=out['Piimhape']/out['Äädikhape'];return out}
 function calc(){const vals=getValues();const active=samples.find(s=>s.column===activeColumn);if(active)active.values=vals;const pcs={},pws={},details=[];let critical=0;for(const c of typeCriteria()){if(vals[c.name]==null)continue;const v=vals[c.name],p=score(c,v),g=grade(p); let crit=false; if(c.name==='Hapete summa' && c.critical){ const highLimit=currentType==='Maisisilo'?120:140; crit=v>highLimit; } else { crit=(p===1&&c.critical); }if(crit)critical++;pcs[c.part]=(pcs[c.part]||0)+p*c.w;pws[c.part]=(pws[c.part]||0)+c.w;details.push({...c,v,p,g,crit})}let num=0,den=0,parts={};for(const part of ['A','B','C']){if(pws[part]>0){parts[part]=pcs[part]/pws[part];num+=parts[part]*OUTER[part];den+=OUTER[part]}}if(!den){$('status').textContent='Sisesta vähemalt üks tulemus.';return}const overall=num/den, computed=grade(overall);let final=computed;if(critical>0){if(overall>=3.5)final='HEA';else if(overall>=2.75)final='KESKMINE';else final='HALB'}const complete=['A','B','C'].every(p=>pws[p]>0);showResults({vals,details,parts,overall,computed,final,critical,complete})}
-function showResults(r){resetPreparedPdf();$('resultCard').hidden=false;const fg=$('finalGrade'),finalText=gradeLabel(r.final);fg.textContent=finalText;fg.className='result '+(r.final==='HALB'?'grade-bad':(r.final==='KESKMINE'?'grade-warn':'grade-good'))+(finalText==='PEAKS OLEMA PAREM'?' long-grade':'');fg.style.fontSize=finalText==='PEAKS OLEMA PAREM'?'15px':'';$('scoreLine').textContent=`Arvutuslik hinne: ${gradeLabel(r.computed)} (${r.overall.toFixed(2).replace('.',',')} p)${r.critical?` · Kriitilisi piiranguid: ${r.critical}`:''}`;$('completeLine').textContent=r.complete?'Staatus: TÄIELIK HINNANG':'Staatus: ESIALGNE – vähemalt ühe osa andmed puuduvad';$('reportMeta').textContent=`Silo: ${currentType} · Prooviveerg: ${activeColumn??'–'} · Analüüsi nr: ${$('analysis').value||'–'} · Ettevõte/hoidla: ${$('farm').value||'–'} · Kuupäev: ${new Date().toLocaleDateString('et-EE')}`;
+function showResults(r){resetPreparedPdf();$('resultCard').hidden=false;const fg=$('finalGrade'),finalText=gradeLabel(r.final);fg.textContent=finalText;fg.className='result '+(r.final==='HALB'?'grade-bad':(r.final==='KESKMINE'?'grade-warn':'grade-good'))+(finalText==='PEAKS OLEMA PAREM'?' long-grade':'');fg.style.fontSize=finalText==='PEAKS OLEMA PAREM'?'15px':'';$('scoreLine').textContent=`Arvutuslik hinne: ${gradeLabel(r.computed)} (${r.overall.toFixed(2).replace('.',',')} p)${r.critical?` · Kriitilisi piiranguid: ${r.critical}`:''}`;$('completeLine').textContent=r.complete?'Staatus: TÄIELIK HINNANG':'Staatus: ESIALGNE – vähemalt ühe osa andmed puuduvad';$('reportMeta').textContent=`Silo: ${currentType} · Prooviveerg: ${activeColumn??'–'} · Analüüsi nr: ${$('analysis').value||'–'} · Ettevõte/hoidla: ${$('farm').value||'–'} · Koostaja: ${$('author').value||'–'} · Kuupäev: ${new Date().toLocaleDateString('et-EE')}`;
 $('partScores').innerHTML=['A','B','C'].map(p=>r.parts[p]!=null?`<p><strong>${LABELS[p]}:</strong> ${r.parts[p].toFixed(2).replace('.',',')} p – ${gradeLabel(grade(r.parts[p]))}</p>`:`<p><strong>${LABELS[p]}:</strong> ANDMED PUUDUVAD</p>`).join('');
 $('detailBody').innerHTML=r.details.map(x=>`<tr><td>${x.part}</td><td>${x.name}</td><td>${x.v.toFixed(2).replace('.',',')} ${x.unit}</td><td>${x.p}</td><td>${gradeLabel(x.g)}</td><td class="${x.crit?'crit':''}">${x.crit?'KRIITILINE':''}</td></tr>`).join('');
 const rec=r.details.filter(x=>x.p<=2).sort((a,b)=>a.p-b.p||a.name.localeCompare(b.name));$('recommendations').innerHTML=rec.length?rec.map(x=>`<p><strong>${x.name}:</strong> ${x.v.toFixed(2).replace('.',',')} ${x.unit} – <span class="${x.crit?'crit':''}">${x.crit?'KRIITILINE PROBLEEM':'VAJAB TÄHELEPANU'}</span>. ${x.comment}</p>`).join(''):'<p>Olulisi 1–2 punkti näitajaid ei ole sisestatud andmete põhjal.</p>';window.scrollTo({top:$('resultCard').offsetTop-70,behavior:'smooth'})}
@@ -432,7 +434,7 @@ async function renderVectorPdf(data,scale){
   addPage(false);
   page.drawText('VESKIMEISTER',{x:M,y:y-14,font:bold,size:14,color:green});y-=19;
   page.drawText('Silo kvaliteedi hinnang',{x:M,y:y-12,font:bold,size:12,color:green});y-=18;
-  if(!drawWrapped(data.meta,{size:8.5*scale,color:muted,after:5*scale}))return {overflow:true};
+  if(!drawWrapped(data.meta,{font:bold,size:11,color:black,after:6*scale}))return {overflow:true};
   if(!heading('3. Hinnang',12*scale))return {overflow:true};
   const gradeColor=data.gradeKind==='bad'?red:(data.gradeKind==='warn'?orange:good),gradeSize=data.final==='PEAKS OLEMA PAREM'?11.25:18;
   if(!drawWrapped(data.final,{font:bold,size:gradeSize*scale,color:gradeColor,after:4*scale}))return {overflow:true};
