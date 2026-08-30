@@ -9,6 +9,7 @@ PAIGALDAMINE
 4. Edaspidi ava SiloHindaja avakuva ikoonist.
 
 V4 UUENDUSED
+- Jaotises „3. Hinnang“ kuvatakse hinde „HALB“ asemel „PEAKS OLEMA PAREM“.
 - Ühel foto- või PDF-lehel võib olla kuni 20 prooviveergu.
 - Iga veeru saab eraldi määrata maisisiloks, rohusiloks või valikuga „Ei kasutata“ välja jätta.
 - Maisi- ja rohusiloveerge võib olla mitu või üldse mitte.
