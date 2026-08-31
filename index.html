@@ -48,7 +48,7 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{border-bottom:1p
 <header><img src="veskimeister.jpg" alt="VESKIMEISTER – tervisliku loomasööda tootja"></header>
 <main>
 <section class="card no-print">
-<h1>SiloHindaja – iPhone v4.6</h1>
+<h1>SiloHindaja – iPhone v4.7</h1>
 <p class="note"><strong>Versioon 4.6 – suurem must päiserida, lisatud koostaja ning hallituse ja toksiinide märkus.</strong></p>
 <div class="row">
 <div><label for="farm">Ettevõte / hoidla</label><input id="farm" type="text" placeholder="Ettevõte või hoidla"></div>
@@ -103,7 +103,7 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{border-bottom:1p
 <p id="scoreLine"></p><p id="completeLine" class="note"></p>
 <div id="partScores"></div>
 <h3>Arvutuskäik</h3><div style="overflow-x:auto"><table><thead><tr><th>Osa</th><th>Näitaja</th><th>Väärtus</th><th>P</th><th>Hinne</th><th></th></tr></thead><tbody id="detailBody"></tbody></table></div>
-<h3>Soovitused ja kommentaarid</h3><div id="recommendations"></div>
+<h3>Soovitused järgmise silo tegemiseks</h3><div id="recommendations"></div>
 <p class="note">Märkus: hinnang on praktiline otsustustugi. Lõplik söötmisotsus tuleb siduda ratsiooni, kuivaine söömuse, silo hügieeni ja loomade tegeliku reaktsiooniga. Silo hinnang ei võta arvesse silo võimalikku hallituse ja toksiinide esinemist. Neid tuleb hinnata eraldi sõltuvalt loomaliigist ja vanusest.</p>
 <div class="actions no-print"><button class="primary" id="printBtn">Valmista PDF / prindi</button><button class="secondary" id="shareBtn">Jaga hinnangu teksti</button></div>
 <div class="status no-print" id="pdfReady" hidden></div>
@@ -138,6 +138,88 @@ function parseNum(s){if(s==null)return null; const m=String(s).replace(/\s/g,'')
 function grade(p){return p>=3.5?'VÄGA HEA':p>=2.75?'HEA':p>=2?'KESKMINE':'HALB'}
 function gradeLabel(g){return g==='HALB'?'PEAKS OLEMA PAREM':g}
 function score(c,v){if(v>=c.a1&&v<=c.a2)return 4;if(v>=c.b1&&v<=c.b2)return 3;if(v>=c.c1&&v<=c.c2)return 2;return 1}
+const COMMON_FUTURE_ACTIONS={
+  'Toortuhk':'tõsta niite- või lõikekõrgust, väldi mulla sattumist vaalu ja hoidlasse ning hoia kogur, veoteed ja tihendamistehnika puhtad.',
+  'Toorrasv':'kontrolli proovi esinduslikkust. Seda näitajat saab valmistamisega vähe muuta; korista õigel ajal ja väldi rohusilo lehekadu.',
+  'pH':{
+    low:'väldi liiga märja materjali sileerimist ja liigset käärimist; korista sihtkuivaines ning kontrolli hapete ja silokindlustuslisandi koosmõju.',
+    high:'tihenda õhukeste kihtidena, täida hoidla kiiresti, sule see kohe õhukindlalt ning kasuta vajaduse korral kultuurile sobivat piimhappebakterit.'
+  },
+  'Piimhape':{
+    low:'väldi mulla ja sõnnikuga saastumist, tihenda kiiresti ja sule õhukindlalt; vähese suhkruga rohul kasuta sobivat piimhappebakterit.',
+    high:'väldi liiga märja materjali sileerimist; närvuta rohi või korista mais sihtkuivaines, et käärimine ei muutuks liiga intensiivseks.'
+  },
+  'Äädikhape':{
+    low:'hoia silo õhukindel. Kui silo kipub avamisel kuumenema, kasuta järgmisel korral tõendatud aeroobset stabiilsust parandavat silokindlustuslisandit.',
+    high:'korista sihtkuivaines, täida ja tihenda hoidla kiiresti ning sule kohe; väldi aeglast täitmist, õhu sissepääsu ja ebasobivat silokindlustuslisandit.'
+  },
+  'Propioonhape':'korista puhas materjal sihtkuivaines, tihenda ja sule kiiresti ning väldi õhu sissepääsu ja sekundaarset käärimist.',
+  'Võihape':'väldi mulla ja sõnnikuga saastumist, närvuta rohi piisavalt, täida kiiresti ja sule õhukindlalt; märjal või raskesti sileeruval rohul kasuta sobivat silokindlustuslisandit.',
+  'Etanool':'tihenda õhukeste kihtidena, lõpeta täitmine kiiresti ja sule kohe; paranda kile, servade ning avatud silo pinna õhukindlust.',
+  'NH3-N kogu N-st':'lühenda närvutamisaega, väldi vihma ja saastumist ning taga kiire hapestumine tugeva tihendamise, kohese sulgemise ja vajaduse korral sobiva silokindlustuslisandiga.',
+  'Hapete summa':{
+    low:'taga kiire piimhappekäärimine: korista sobivas kuivaines, tihenda korralikult, sule kohe ja kasuta vajaduse korral kultuurile sobivat silokindlustuslisandit.',
+    high:'väldi liiga märja materjali sileerimist; korista sihtkuivaines, täida kiiresti ja sule kohe, et vähendada liigset käärimist ning kuivainekadu.'
+  },
+  'Piimhape : äädikhape':{
+    low:'vähenda äädikhappekäärimist kiire täitmise, tugeva tihendamise, kohese sulgemise ja kultuurile sobiva silokindlustuslisandiga.',
+    high:'kontrolli eelkõige silo kuumenemist avamisel; korduva kuumenemise korral kasuta aeroobset stabiilsust parandavat silokindlustuslisandit ja taga piisav etteandekiirus.'
+  }
+};
+const TYPE_FUTURE_ACTIONS={
+  'Maisisilo':{
+    'Kuivaine':{
+      low:'korista veidi hiljem ja mõõda põllul kogu taime kuivainet, sihiga 32–38%.',
+      high:'korista varem; kuiva massi korral lühenda hekslit, tihenda õhukeste kihtidena eriti hoolikalt ja sule hoidla kohe.'
+    },
+    'Toorproteiin':'vali põllule sobiv hübriid, väeta mullaproovi ja saagiootuse järgi ning väldi liiga hilist koristust; ära suurenda lämmastikku üksnes proteiininäidu tõstmiseks.',
+    'Toorkiud':'korista mais õiges küpsusastmes ning eelista suurema terade osakaalu ja hea kiuseeduvusega hübriidi.',
+    'Tärklis':'väldi liiga varast koristust, kontrolli tera küpsust ja kogu taime kuivainet ning eelista põllule sobiva küpsusajaga, hea terasaagiga hübriidi.',
+    'NDF':'korista õiges küpsusastmes, eelista hästi seeduva kiuga hübriidi ja kaalu lõikekõrguse mõõdukat tõstmist, kui saagikadu on vastuvõetav.',
+    'ADF':'väldi üleküpsenud maisi, eelista hästi seeduva kiuga hübriidi ja korista sihtkuivaines.',
+    'Metaboliseeruv energia':'korista sihtkuivaines, eelista hea tärklise- ja kiuseeduvusega hübriidi, purusta kõik terad ning vähenda koristus- ja säilituskadusid.',
+    'Orgaanilise aine seeduvus':'väldi liiga hilist koristust, eelista hea kiuseeduvusega hübriidi ning taga korralik terade purustamine ja õhukindel säilitamine.',
+    'NDFD30':'eelista hästi seeduva kiuga hübriidi, väldi liiga hilist koristust ja korista sihtkuivaines.',
+    'NDFD48':'eelista hästi seeduva kiuga hübriidi, väldi liiga hilist koristust ja korista sihtkuivaines.',
+    'uNDF240':'eelista väiksema seedumatu kiu osaga hübriidi, korista õigel ajal ja kaalu lõikekõrguse mõõdukat tõstmist.',
+    'IVSD7':'seadista teramuljur koristuspäeva kuivainesisalduse järgi, kontrolli hekslit mitu korda päevas ja veendu, et ükski terve tera ei jääks alles.',
+    'CSPS/KPS':'vähenda teramuljuri vahet, kontrolli rullide kulumist ja rööpsust ning testi töö käigus, et kõik terad oleksid purustatud.',
+    'Ligniin':'eelista väiksema ligniinisisalduse ja hea kiuseeduvusega hübriidi, väldi hilist koristust ning kaalu lõikekõrguse mõõdukat tõstmist.'
+  },
+  'Rohusilo':{
+    'Kuivaine':{
+      low:'närvuta rohi kiiresti laias vaalus 30–40% kuivaineni, kuid väldi vihma ja liiga pikka põllul olekut.',
+      high:'lühenda närvutamisaega ja korista varem; kuiva massi korral kasuta lühemat hekslit ning tihenda eriti hoolikalt.'
+    },
+    'Toorproteiin':{
+      low:'niida nooremas arengujärgus, vähenda lehekadu, hoia liblikõieliste sobiv osakaal ning väeta mulla- ja saagianalüüsi järgi.',
+      high:'väldi liigset lämmastikväetamist, närvuta kiiresti sihtkuivaineni ja taga kiire hapestumine, et vähendada proteiini lagunemist.'
+    },
+    'Toorkiud':'niida nooremas, leherikkamas arengujärgus ning väldi koristuse hilinemist.',
+    'NDF':'niida varem ja leherikkamas arengujärgus, eelista hea kiuseeduvusega liike ja sorte ning väldi vihmakahjustust.',
+    'ADF':'niida varem, enne varte tugevat puitumist, ning lühenda närvutamisaega.',
+    'Metaboliseeruv energia':'niida nooremas arengujärgus, närvuta kiiresti ning vähenda vihma-, hingamis- ja säilituskadusid.',
+    'Orgaanilise aine seeduvus':'niida varem, vali hästi seeduv taimik, närvuta kiiresti ja väldi mulla ning vihmaga saastumist.',
+    'NDFD30':'niida nooremas arengujärgus, eelista hea kiuseeduvusega liike ja sorte ning väldi pikka närvutamist.',
+    'NDFD48':'niida nooremas arengujärgus, eelista hea kiuseeduvusega liike ja sorte ning väldi pikka närvutamist.',
+    'uNDF240':'niida enne taimiku vananemist ja varte puitumist ning eelista hea kiuseeduvusega liike ja sorte.',
+    'Ligniin':'niida nooremas arengujärgus, enne varte puitumist, ja hoia taimikus leherikaste liikide sobiv osakaal.'
+  }
+};
+function improvementDirection(c,v){
+  const hasLow=c.a1>-900,hasHigh=c.a2<900;
+  if(hasLow&&v<c.a1)return 'low';
+  if(hasHigh&&v>c.a2)return 'high';
+  if(!hasLow)return 'high';
+  if(!hasHigh)return 'low';
+  return v<(c.a1+c.a2)/2?'low':'high';
+}
+function futureAction(c,v){
+  const action=TYPE_FUTURE_ACTIONS[c.type]?.[c.name]??COMMON_FUTURE_ACTIONS[c.name];
+  if(!action)return 'Järgmisel silo tegemisel: määra kõrvalekalde põhjus koos labori ja põlluandmetega ning korrigeeri koristusaega, kuivainet, tihendamist ja sulgemist.';
+  const text=typeof action==='string'?action:(action[improvementDirection(c,v)]||action.low||action.high);
+  return `Järgmisel silo tegemisel: ${text}`;
+}
 function typeCriteria(){return CRITERIA.filter(c=>c.type===currentType)}
 function sampleLabel(sample){return `Veerg ${sample.column} – ${sample.type}`}
 function getAssignments(){
@@ -304,7 +386,7 @@ function calc(){const vals=getValues();const active=samples.find(s=>s.column===a
 function showResults(r){resetPreparedPdf();$('resultCard').hidden=false;const fg=$('finalGrade'),finalText=gradeLabel(r.final);fg.textContent=finalText;fg.className='result '+(r.final==='HALB'?'grade-bad':(r.final==='KESKMINE'?'grade-warn':'grade-good'))+(finalText==='PEAKS OLEMA PAREM'?' long-grade':'');fg.style.fontSize=finalText==='PEAKS OLEMA PAREM'?'15px':'';$('scoreLine').textContent=`Arvutuslik hinne: ${gradeLabel(r.computed)} (${r.overall.toFixed(2).replace('.',',')} p)${r.critical?` · Kriitilisi piiranguid: ${r.critical}`:''}`;$('completeLine').textContent=r.complete?'Staatus: TÄIELIK HINNANG':'Staatus: ESIALGNE – vähemalt ühe osa andmed puuduvad';$('reportMeta').textContent=`Silo: ${currentType} · Prooviveerg: ${activeColumn??'–'} · Analüüsi nr: ${$('analysis').value||'–'} · Ettevõte/hoidla: ${$('farm').value||'–'} · Koostaja: ${$('author').value||'–'} · Kuupäev: ${new Date().toLocaleDateString('et-EE')}`;
 $('partScores').innerHTML=['A','B','C'].map(p=>r.parts[p]!=null?`<p><strong>${LABELS[p]}:</strong> ${r.parts[p].toFixed(2).replace('.',',')} p – ${gradeLabel(grade(r.parts[p]))}</p>`:`<p><strong>${LABELS[p]}:</strong> ANDMED PUUDUVAD</p>`).join('');
 $('detailBody').innerHTML=r.details.map(x=>`<tr><td>${x.part}</td><td>${x.name}</td><td>${x.v.toFixed(2).replace('.',',')} ${x.unit}</td><td>${x.p}</td><td>${gradeLabel(x.g)}</td><td class="${x.crit?'crit':''}">${x.crit?'KRIITILINE':''}</td></tr>`).join('');
-const rec=r.details.filter(x=>x.p<=2).sort((a,b)=>a.p-b.p||a.name.localeCompare(b.name));$('recommendations').innerHTML=rec.length?rec.map(x=>`<p><strong>${x.name}:</strong> ${x.v.toFixed(2).replace('.',',')} ${x.unit} – <span class="${x.crit?'crit':''}">${x.crit?'KRIITILINE PROBLEEM':'VAJAB TÄHELEPANU'}</span>. ${x.comment}</p>`).join(''):'<p>Olulisi 1–2 punkti näitajaid ei ole sisestatud andmete põhjal.</p>';window.scrollTo({top:$('resultCard').offsetTop-70,behavior:'smooth'})}
+const rec=r.details.filter(x=>x.p<=2).sort((a,b)=>a.p-b.p||a.name.localeCompare(b.name));$('recommendations').innerHTML=rec.length?rec.map(x=>`<p><strong>${x.name}:</strong> ${x.v.toFixed(2).replace('.',',')} ${x.unit} – <span class="${x.crit?'crit':''}">${x.crit?'KRIITILINE PROBLEEM':'VAJAB TÄHELEPANU'}</span>. ${x.comment} <strong>${futureAction(x,x.v)}</strong></p>`).join(''):'<p>Olulisi 1–2 punkti näitajaid ei ole sisestatud andmete põhjal.</p>';window.scrollTo({top:$('resultCard').offsetTop-70,behavior:'smooth'})}
 function setStatus(t,p){$('status').textContent=t;if(p!=null)$('progressBar').style.width=Math.max(0,Math.min(100,p))+'%'}
 async function ensureTesseract(){if(window.Tesseract)return;setStatus('Laen OCR-moodulit…',5);await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='./tesseract.min.js';s.onload=()=>window.Tesseract?resolve():reject(new Error('OCR-moodulit ei õnnestunud käivitada.'));s.onerror=()=>reject(new Error('OCR-mooduli kohalik fail puudub.'));document.head.appendChild(s)})}
 async function ocrImage(file){
@@ -457,7 +539,7 @@ async function renderVectorPdf(data,scale){
     }
     page.drawLine({start:{x:M+CW,y:top},end:{x:M+CW,y:bottom},thickness:.35,color:line});page.drawLine({start:{x:M,y:bottom},end:{x:M+CW,y:bottom},thickness:.35,color:line});y=bottom;
   }
-  y-=6*scale;if(!heading('Soovitused ja kommentaarid',10.5*scale))return {overflow:true};
+  y-=6*scale;if(!heading('Soovitused järgmise silo tegemiseks',10.5*scale))return {overflow:true};
   for(const rec of data.recommendations){const bg=rec.includes('KRIITILINE PROBLEEM')?paleRed:(rec.includes('VAJAB TÄHELEPANU')?paleOrange:null),color=rec.includes('KRIITILINE PROBLEEM')?red:black;if(!drawWrapped(rec,{size:8.8*scale,color,after:3*scale,background:bg}))return {overflow:true}}
   if(data.note){y-=3*scale;if(!drawWrapped(data.note,{size:7.8*scale,color:muted,after:0}))return {overflow:true}}
   if(overflow)return {overflow:true};

@@ -1,4 +1,12 @@
-VESKIMEISTER – SiloHindaja iPhone v4.6
+VESKIMEISTER – SiloHindaja iPhone v4.7
+
+V4.7 SOOVITUSED JÄRGMISE SILO TEGEMISEKS
+- Iga 1–2 punkti saanud näitaja kommentaaris on nüüd konkreetne tegevus, millega sama näitajat järgmise silo tegemisel parandada.
+- Programm eristab liiga madalat ja liiga kõrget tulemust ning annab neile erineva soovituse.
+- Maisisilo soovitused hõlmavad muu hulgas koristuskuivainet, hübriidi ja koristusaja valikut, lõikekõrgust, teramuljuri seadistust, tihendamist ning õhukindlat sulgemist.
+- Rohusilo soovitused hõlmavad muu hulgas niiteaega ja -kõrgust, kiiret närvutamist, mulla ja vihmaga saastumise vältimist, taimiku valikut, tihendamist ning õhukindlat sulgemist.
+- Fermentatsiooninäitajate juures antakse praktilised tegevused pH, piim-, äädik-, propioon- ja võihappe, etanooli, NH3-N-i ning hapete summa parandamiseks.
+- Soovitused kuvatakse programmis ja lisatakse ka aadressivabasse, kuni kahele A4-lehele mahtuvasse PDF-i.
 
 V4.6 PÄISEREA JA MÄRKUSE TÄIENDUS
 - PDF-i rida „Silo / Prooviveerg / Analüüsi nr / Ettevõte/hoidla / Koostaja / Kuupäev“ on 11 pt, must ja rasvane.
