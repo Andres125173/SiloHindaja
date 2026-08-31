@@ -424,14 +424,18 @@ const PDF_MARGIN_MM=20;
 function pdfSafeText(value){return String(value??'').normalize('NFC').replace(/\u00a0/g,' ').replace(/[‐‑‒–—−]/g,'-').replace(/[“”„]/g,'"').replace(/[‘’]/g,"'").replace(/·/g,' - ').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/→/g,'->').replace(/[^\x20-\x7E\u00C0-\u00FF\u0152\u0153\u0160\u0161\u0178\u017D\u017E]/g,'?')}
 function collectPdfReport(){
   const final=$('finalGrade'),notes=[...$('resultCard').querySelectorAll('p.note')];
+  const protectedPrint=(document.querySelector('input[name="printMode"]:checked')?.value||'protected')==='protected';
+  const rawDetails=[...$('detailBody').querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('td')].map(td=>td.textContent.trim()));
+  const rawRecommendations=[...$('recommendations').querySelectorAll('p')].map(p=>p.textContent.trim());
   return {
-    meta:$('reportMeta').textContent,final:final.textContent,score:$('scoreLine').textContent,status:$('completeLine').textContent,
+    protectedPrint,
+    meta:$('reportMeta').textContent,final:final.textContent,score:protectedPrint?'Kaitstud väljatrükk – detailset arvutuskäiku ja piirväärtusi ei kuvata.':$('scoreLine').textContent,status:$('completeLine').textContent,
     gradeKind:final.classList.contains('grade-bad')?'bad':(final.classList.contains('grade-warn')?'warn':'good'),
-    parts:[...$('partScores').querySelectorAll('p')].map(p=>p.textContent),
+    parts:protectedPrint?[]:[...$('partScores').querySelectorAll('p')].map(p=>p.textContent),
     milkLossMain:$('milkLossMain').textContent,
-    milkLossNote:$('milkLossNote').textContent,
-    details:[...$('detailBody').querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('td')].map(td=>td.textContent.trim())),
-    recommendations:[...$('recommendations').querySelectorAll('p')].map(p=>p.textContent.trim()),
+    milkLossNote:protectedPrint?'Tinglik piimakadu on arvutuslik võrdlushinnang. Detailset arvutusmudelit kaitstud väljatrükil ei kuvata.':$('milkLossNote').textContent,
+    details:protectedPrint?rawDetails.map(r=>[r[0]||'',r[1]||'',r[2]||'',r[4]||'',r[5]||'']):rawDetails,
+    recommendations:protectedPrint?rawRecommendations.filter(t=>!String(t).trim().toLowerCase().startsWith('ph hindamise alus:')):rawRecommendations,
     note:notes.length?notes[notes.length-1].textContent:''
   };
 }
@@ -471,17 +475,17 @@ async function renderVectorPdf(data,scale){
   for(const part of data.parts)if(!drawWrapped(part,{size:9*scale,after:1.5*scale}))return {overflow:true};
   y-=2*scale;if(!drawWrapped(data.milkLossMain,{font:bold,size:9.2*scale,color:black,after:2*scale,background:paleOrange}))return {overflow:true};
   if(!drawWrapped(data.milkLossNote,{size:7.8*scale,color:muted,after:3*scale}))return {overflow:true};
-  y-=3*scale;if(!heading('Arvutuskäik',10.5*scale))return {overflow:true};
-  const widths=[22,140,104,25,92,CW-383],headers=['Osa','Näitaja','Väärtus','P','Hinne','Märkus'],tableSize=7.8*scale,tableLh=tableSize*1.16;
+  y-=3*scale;if(!heading(data.protectedPrint?'Näitajate hinnang':'Arvutuskäik',10.5*scale))return {overflow:true};
+  const widths=data.protectedPrint?[24,158,112,100,CW-394]:[22,140,104,25,92,CW-383],headers=data.protectedPrint?['Osa','Näitaja','Väärtus','Hinne','Märkus']:['Osa','Näitaja','Väärtus','P','Hinne','Märkus'],gradeCol=data.protectedPrint?3:4,remarkCol=data.protectedPrint?4:5,tableSize=7.8*scale,tableLh=tableSize*1.16;
   function tableHeader(){const rh=15*scale;if(!ensureSpace(rh))return false;let x=M;page.drawRectangle({x:M,y:y-rh,width:CW,height:rh,color:head,backgroundColor:head});for(let i=0;i<headers.length;i++){page.drawText(headers[i],{x:x+2,y:y-rh+4*scale,font:bold,size:7.2*scale,color:muted});x+=widths[i]}page.drawLine({start:{x:M,y:y-rh},end:{x:M+CW,y:y-rh},thickness:.5,color:line});y-=rh;return true}
   if(!tableHeader())return {overflow:true};
   for(const row of data.details){
     const cells=headers.map((_,i)=>wrapPdfText(row[i]||'',regular,tableSize,widths[i]-4)),rh=Math.max(14*scale,Math.max(...cells.map(c=>c.length))*tableLh+5*scale);
-    if(y-rh<M){if(pages.length>=2)return {overflow:true};addPage(true);if(!heading('Arvutuskäik (jätk)',9.5*scale)||!tableHeader())return {overflow:true}}
+    if(y-rh<M){if(pages.length>=2)return {overflow:true};addPage(true);if(!heading(data.protectedPrint?'Näitajate hinnang (jätk)':'Arvutuskäik (jätk)',9.5*scale)||!tableHeader())return {overflow:true}}
     const top=y,bottom=y-rh;let x=M;
     for(let i=0;i<cells.length;i++){
-      const value=row[i]||'';let bg=null;if(i===4)bg=value.includes('PEAKS')?paleRed:(value.includes('KESKMINE')?paleOrange:null);if(i===5&&value.includes('KRIITILINE'))bg=paleRed;if(bg)page.drawRectangle({x,y:bottom,width:widths[i],height:rh,color:bg,backgroundColor:bg});
-      let cellColor=black,cellFont=regular;if(i===4){cellFont=bold;cellColor=value.includes('PEAKS')?red:(value.includes('KESKMINE')?orange:good)}if(i===5&&value){cellFont=bold;cellColor=red}
+      const value=row[i]||'';let bg=null;if(i===gradeCol)bg=value.includes('PEAKS')?paleRed:(value.includes('KESKMINE')?paleOrange:null);if(i===remarkCol&&value.includes('KRIITILINE'))bg=paleRed;if(bg)page.drawRectangle({x,y:bottom,width:widths[i],height:rh,color:bg,backgroundColor:bg});
+      let cellColor=black,cellFont=regular;if(i===gradeCol){cellFont=bold;cellColor=value.includes('PEAKS')?red:(value.includes('KESKMINE')?orange:good)}if(i===remarkCol&&value){cellFont=bold;cellColor=red}
       cells[i].forEach((txt,j)=>page.drawText(txt,{x:x+2,y:top-3*scale-tableSize-j*tableLh,font:cellFont,size:tableSize,color:cellColor}));
       page.drawLine({start:{x,y:top},end:{x,y:bottom},thickness:.35,color:line});x+=widths[i]
     }
@@ -529,7 +533,7 @@ async function createAndSharePdf(){
     if(ready){ready.textContent='PDF on valmis. Puuduta nüüd nuppu „Jaga / prindi valmis PDF“ ja vali „Prindi“ või „Salvesta failidesse“.';ready.hidden=false}
   }catch(e){btn.textContent=old;alert('PDF-i valmistamine ebaõnnestus: '+e.message)}finally{btn.disabled=false}
 }
-$('columnCount').addEventListener('change',renderColumnAssignments);$('columnAssignments').addEventListener('change',syncSamplesFromAssignments);$('sampleSelect').addEventListener('change',e=>activateSample(e.target.value));$('calcBtn').addEventListener('click',calc);$('clearBtn').addEventListener('click',()=>{const sample=samples.find(s=>s.column===activeColumn);if(sample)sample.values={};renderFields();$('resultCard').hidden=true;setStatus('Praeguse prooviveeru väärtused tühjendatud.',0)});$('cameraInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('imageInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('pdfInput').addEventListener('change',e=>handleFile(e.target.files[0],'pdf'));$('printBtn').addEventListener('click',createAndSharePdf);$('shareBtn').addEventListener('click',async()=>{const text=`VESKIMEISTER – Silo kvaliteedi hinnang
+$('columnCount').addEventListener('change',renderColumnAssignments);$('columnAssignments').addEventListener('change',syncSamplesFromAssignments);$('sampleSelect').addEventListener('change',e=>activateSample(e.target.value));$('calcBtn').addEventListener('click',calc);$('clearBtn').addEventListener('click',()=>{const sample=samples.find(s=>s.column===activeColumn);if(sample)sample.values={};renderFields();$('resultCard').hidden=true;setStatus('Praeguse prooviveeru väärtused tühjendatud.',0)});$('cameraInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('imageInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('pdfInput').addEventListener('change',e=>handleFile(e.target.files[0],'pdf'));document.querySelectorAll('input[name="printMode"]').forEach(el=>el.addEventListener('change',()=>resetPreparedPdf()));$('printBtn').addEventListener('click',createAndSharePdf);$('shareBtn').addEventListener('click',async()=>{const text=`VESKIMEISTER – Silo kvaliteedi hinnang
 ${$('reportMeta').textContent}
 Lõpphinne: ${$('finalGrade').textContent}
 ${$('scoreLine').textContent}
