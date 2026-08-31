@@ -1,4 +1,4 @@
-const CACHE='silohindaja-v4-7-future-actions-v1';
+const CACHE='silohindaja-v4-8-milk-loss-v1';
 const ASSETS=['./','./index.html','./app.js','./manifest.webmanifest','./veskimeister.jpg','./icon-180.png','./icon-192.png','./icon-512.png','./PAIGALDAMINE.html','./tesseract.min.js','./worker.min.js','./tesseract-core-lstm.wasm.js','./tesseract-core-simd-lstm.wasm.js','./eng.traineddata.gz','./deu.traineddata.gz','./est.traineddata.gz','./pdf.mjs','./pdf.worker.min.mjs','./html2pdf.bundle.min.js','./pdf-lib.min.js'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
 self.addEventListener('activate',e=>e.waitUntil(Promise.all([self.clients.claim(),caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))])));

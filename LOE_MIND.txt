@@ -1,4 +1,12 @@
-VESKIMEISTER – SiloHindaja iPhone v4.7
+VESKIMEISTER – SiloHindaja iPhone v4.8
+
+V4.8 TINGLIK PIIMAKADU
+- Iga hinnatava silo juures kuvatakse lühike tinglik piimakao hinnang, mille alus on 12 kg silo kuivainet lehma kohta päevas.
+- Võrdluseks kasutatakse sama silo liigi VÄGA HEA metaboliseeruva energia piiri: maisisilo 11,3 ja rohusilo 10,5 MJ ME/kg KA.
+- Arvutus arvestab silo ME-d, väga kõrge äädikhappe tinglikku mõju ning hapete summa võimalikku mõju silo söömusele.
+- Etanooli ei liideta eraldi piimakaona; kõrge etanool tuuakse selgituses välja hoiatusena.
+- Kui ME või hapete summa puudub, näitab programm selgelt, et hinnang on osaline.
+- Piimakao lühirida lisatakse ka jagatavasse teksti ja aadressivabasse PDF-i.
 
 V4.7 SOOVITUSED JÄRGMISE SILO TEGEMISEKS
 - Iga 1–2 punkti saanud näitaja kommentaaris on nüüd konkreetne tegevus, millega sama näitajat järgmise silo tegemisel parandada.
@@ -46,7 +54,7 @@ V4.1 GITHUBI PARANDUS
 - Kõik vajalikud failid on ühes kaustas. GitHubis ei ole vaja alamkaustu luua.
 - PDF-i loomise failid on kaasas ning „Valmista PDF / prindi“ töötab iPhone'is.
 - Uus vahemäluversioon sunnib iPhone'i vana väljatrükki uuendama.
-- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.6“ järgi.
+- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.8“ järgi.
 
 V4 on tehtud võimalikult lihtsaks iPhone'i avakuvale paigaldamiseks.
 

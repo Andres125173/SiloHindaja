@@ -109,6 +109,39 @@ function futureAction(c,v){
   const text=typeof action==='string'?action:(action[improvementDirection(c,v)]||action.low||action.high);
   return `Järgmisel silo tegemisel: ${text}`;
 }
+const MILK_LOSS_MODEL={
+  silageDmKg:12,
+  milkMeEfficiency:0.66,
+  milkNelMjPerKg:3.19,
+  idealMe:{Maisisilo:11.3,Rohusilo:10.5},
+  idealTotalAcids:80,
+  aceticHigh:{Maisisilo:50,Rohusilo:40},
+  aceticMilkPenalty:0.5,
+  acidIntakeSlopeKg:0.0128
+};
+function milkKg(value){return Math.max(0,value).toFixed(1).replace('.',',')}
+function milkKgUpper(value){return (Math.ceil(Math.max(0,value)*10-1e-9)/10).toFixed(1).replace('.',',')}
+function calculateMilkLoss(vals,type=currentType){
+  const cfg=MILK_LOSS_MODEL,me=vals['Metaboliseeruv energia'],acetic=vals['Äädikhape'],acids=vals['Hapete summa'],ethanol=vals['Etanool'];
+  const hasMe=Number.isFinite(me),hasAcids=Number.isFinite(acids),idealMe=cfg.idealMe[type],aceticLimit=cfg.aceticHigh[type];
+  const energyLoss=hasMe?Math.max(0,cfg.silageDmKg*(idealMe-me)*cfg.milkMeEfficiency/cfg.milkNelMjPerKg):null;
+  const aceticLoss=Number.isFinite(acetic)&&acetic>aceticLimit?cfg.aceticMilkPenalty:0;
+  const central=(energyLoss??0)+aceticLoss;
+  const intakeDrop=hasAcids?Math.max(0,(acids-cfg.idealTotalAcids)*cfg.acidIntakeSlopeKg):null;
+  const intakeMilkLoss=hasMe&&hasAcids?intakeDrop*me*cfg.milkMeEfficiency/cfg.milkNelMjPerKg:null;
+  const low=energyLoss;
+  const high=hasMe&&hasAcids?Math.max(central,energyLoss+intakeMilkLoss):null;
+  let main;
+  if(hasMe&&hasAcids)main=`Tinglikult saamata piim: ${milkKg(central)} kg/lehm/päev. Võimalik vahemik ${milkKg(low)}-${milkKgUpper(high)} kg.`;
+  else if(hasMe)main=`Tinglikult saamata piim: ${milkKg(central)} kg/lehm/päev. Vahemiku arvutamiseks puudub hapete summa.`;
+  else if(aceticLoss>0)main=`Tinglikult saamata piim: vähemalt ${milkKg(aceticLoss)} kg/lehm/päev. Täielikuks arvutuseks puudub ME.`;
+  else main='Tinglikku piimakadu ei saa arvutada, sest metaboliseeruva energia (ME) tulemus puudub.';
+  const ethanolText=Number.isFinite(ethanol)&&ethanol>30?'Etanool on kõrge, kuid seda ei liideta eraldi piimakaona.':'Etanooli ei liideta eraldi piimakaona.';
+  const fibreMissing=vals['NDFD48']==null||vals['uNDF240']==null;
+  const fibreText=fibreMissing?' NDFD48/uNDF240 puudumisel ei sisalda hinnang kiu võimalikku lisamõju.':' Kiu seeduvuse mõju ei teisendata selles lihtsustatud mudelis eraldi piimakaoks.';
+  const note=`Alus: 12 kg silo KA ja võrdlus VÄGA HEA siloga. Arvestatud on ME, kõrge äädikhape ning hapete võimalik söömusmõju. ${ethanolText}${fibreText}`;
+  return {main,note,central,low,high,energyLoss,aceticLoss,intakeDrop,intakeMilkLoss};
+}
 function typeCriteria(){return CRITERIA.filter(c=>c.type===currentType)}
 function sampleLabel(sample){return `Veerg ${sample.column} – ${sample.type}`}
 function getAssignments(){
@@ -274,6 +307,7 @@ if(out['Piimhape']!=null&&out['Äädikhape']!=null&&out['Äädikhape']!==0)out['
 function calc(){const vals=getValues();const active=samples.find(s=>s.column===activeColumn);if(active)active.values=vals;const pcs={},pws={},details=[];let critical=0;for(const c of typeCriteria()){if(vals[c.name]==null)continue;const v=vals[c.name],p=score(c,v),g=grade(p),crit=(p===1&&c.critical);if(crit)critical++;pcs[c.part]=(pcs[c.part]||0)+p*c.w;pws[c.part]=(pws[c.part]||0)+c.w;details.push({...c,v,p,g,crit})}let num=0,den=0,parts={};for(const part of ['A','B','C']){if(pws[part]>0){parts[part]=pcs[part]/pws[part];num+=parts[part]*OUTER[part];den+=OUTER[part]}}if(!den){$('status').textContent='Sisesta vähemalt üks tulemus.';return}const overall=num/den, computed=grade(overall);let final=computed;if(critical>0){if(overall>=3.5)final='HEA';else if(overall>=2.75)final='KESKMINE';else final='HALB'}const complete=['A','B','C'].every(p=>pws[p]>0);showResults({vals,details,parts,overall,computed,final,critical,complete})}
 function showResults(r){resetPreparedPdf();$('resultCard').hidden=false;const fg=$('finalGrade'),finalText=gradeLabel(r.final);fg.textContent=finalText;fg.className='result '+(r.final==='HALB'?'grade-bad':(r.final==='KESKMINE'?'grade-warn':'grade-good'))+(finalText==='PEAKS OLEMA PAREM'?' long-grade':'');fg.style.fontSize=finalText==='PEAKS OLEMA PAREM'?'15px':'';$('scoreLine').textContent=`Arvutuslik hinne: ${gradeLabel(r.computed)} (${r.overall.toFixed(2).replace('.',',')} p)${r.critical?` · Kriitilisi piiranguid: ${r.critical}`:''}`;$('completeLine').textContent=r.complete?'Staatus: TÄIELIK HINNANG':'Staatus: ESIALGNE – vähemalt ühe osa andmed puuduvad';$('reportMeta').textContent=`Silo: ${currentType} · Prooviveerg: ${activeColumn??'–'} · Analüüsi nr: ${$('analysis').value||'–'} · Ettevõte/hoidla: ${$('farm').value||'–'} · Koostaja: ${$('author').value||'–'} · Kuupäev: ${new Date().toLocaleDateString('et-EE')}`;
 $('partScores').innerHTML=['A','B','C'].map(p=>r.parts[p]!=null?`<p><strong>${LABELS[p]}:</strong> ${r.parts[p].toFixed(2).replace('.',',')} p – ${gradeLabel(grade(r.parts[p]))}</p>`:`<p><strong>${LABELS[p]}:</strong> ANDMED PUUDUVAD</p>`).join('');
+const milkLoss=calculateMilkLoss(r.vals,currentType);$('milkLossMain').textContent=milkLoss.main;$('milkLossNote').textContent=milkLoss.note;
 $('detailBody').innerHTML=r.details.map(x=>`<tr><td>${x.part}</td><td>${x.name}</td><td>${x.v.toFixed(2).replace('.',',')} ${x.unit}</td><td>${x.p}</td><td>${gradeLabel(x.g)}</td><td class="${x.crit?'crit':''}">${x.crit?'KRIITILINE':''}</td></tr>`).join('');
 const rec=r.details.filter(x=>x.p<=2).sort((a,b)=>a.p-b.p||a.name.localeCompare(b.name));$('recommendations').innerHTML=rec.length?rec.map(x=>`<p><strong>${x.name}:</strong> ${x.v.toFixed(2).replace('.',',')} ${x.unit} – <span class="${x.crit?'crit':''}">${x.crit?'KRIITILINE PROBLEEM':'VAJAB TÄHELEPANU'}</span>. ${x.comment} <strong>${futureAction(x,x.v)}</strong></p>`).join(''):'<p>Olulisi 1–2 punkti näitajaid ei ole sisestatud andmete põhjal.</p>';window.scrollTo({top:$('resultCard').offsetTop-70,behavior:'smooth'})}
 function setStatus(t,p){$('status').textContent=t;if(p!=null)$('progressBar').style.width=Math.max(0,Math.min(100,p))+'%'}
@@ -373,6 +407,8 @@ function collectPdfReport(){
     meta:$('reportMeta').textContent,final:final.textContent,score:$('scoreLine').textContent,status:$('completeLine').textContent,
     gradeKind:final.classList.contains('grade-bad')?'bad':(final.classList.contains('grade-warn')?'warn':'good'),
     parts:[...$('partScores').querySelectorAll('p')].map(p=>p.textContent),
+    milkLossMain:$('milkLossMain').textContent,
+    milkLossNote:$('milkLossNote').textContent,
     details:[...$('detailBody').querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('td')].map(td=>td.textContent.trim())),
     recommendations:[...$('recommendations').querySelectorAll('p')].map(p=>p.textContent.trim()),
     note:notes.length?notes[notes.length-1].textContent:''
@@ -412,6 +448,8 @@ async function renderVectorPdf(data,scale){
   if(!drawWrapped(data.score,{size:9.2*scale,after:2*scale}))return {overflow:true};
   if(!drawWrapped(data.status,{size:8.5*scale,color:muted,after:4*scale}))return {overflow:true};
   for(const part of data.parts)if(!drawWrapped(part,{size:9*scale,after:1.5*scale}))return {overflow:true};
+  y-=2*scale;if(!drawWrapped(data.milkLossMain,{font:bold,size:9.2*scale,color:black,after:2*scale,background:paleOrange}))return {overflow:true};
+  if(!drawWrapped(data.milkLossNote,{size:7.8*scale,color:muted,after:3*scale}))return {overflow:true};
   y-=3*scale;if(!heading('Arvutuskäik',10.5*scale))return {overflow:true};
   const widths=[22,140,104,25,92,CW-383],headers=['Osa','Näitaja','Väärtus','P','Hinne','Märkus'],tableSize=7.8*scale,tableLh=tableSize*1.16;
   function tableHeader(){const rh=15*scale;if(!ensureSpace(rh))return false;let x=M;page.drawRectangle({x:M,y:y-rh,width:CW,height:rh,color:head,backgroundColor:head});for(let i=0;i<headers.length;i++){page.drawText(headers[i],{x:x+2,y:y-rh+4*scale,font:bold,size:7.2*scale,color:muted});x+=widths[i]}page.drawLine({start:{x:M,y:y-rh},end:{x:M+CW,y:y-rh},thickness:.5,color:line});y-=rh;return true}
@@ -473,5 +511,6 @@ async function createAndSharePdf(){
 $('columnCount').addEventListener('change',renderColumnAssignments);$('columnAssignments').addEventListener('change',syncSamplesFromAssignments);$('sampleSelect').addEventListener('change',e=>activateSample(e.target.value));$('calcBtn').addEventListener('click',calc);$('clearBtn').addEventListener('click',()=>{const sample=samples.find(s=>s.column===activeColumn);if(sample)sample.values={};renderFields();$('resultCard').hidden=true;setStatus('Praeguse prooviveeru väärtused tühjendatud.',0)});$('cameraInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('imageInput').addEventListener('change',e=>handleFile(e.target.files[0],'image'));$('pdfInput').addEventListener('change',e=>handleFile(e.target.files[0],'pdf'));$('printBtn').addEventListener('click',createAndSharePdf);$('shareBtn').addEventListener('click',async()=>{const text=`VESKIMEISTER – Silo kvaliteedi hinnang
 ${$('reportMeta').textContent}
 Lõpphinne: ${$('finalGrade').textContent}
-${$('scoreLine').textContent}`;if(navigator.share){try{await navigator.share({title:'Silo kvaliteedi hinnang',text});return}catch(e){}}prompt('Kopeeri hinnangu tekst:',text)});
+${$('scoreLine').textContent}
+${$('milkLossMain').textContent}`;if(navigator.share){try{await navigator.share({title:'Silo kvaliteedi hinnang',text});return}catch(e){}}prompt('Kopeeri hinnangu tekst:',text)});
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});renderColumnAssignments();
