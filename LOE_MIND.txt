@@ -1,4 +1,11 @@
-VESKIMEISTER – SiloHindaja iPhone v4.8
+VESKIMEISTER – SiloHindaja iPhone v4.9
+
+V4.9 ROHUSILO pH KUIVAINE JÄRGI
+- Rohusilo pH hinnatakse nüüd koos sama proovi kuivainesisaldusega.
+- VÄGA HEA pH ülempiir on KA alla 25% puhul 4,1; KA 25–40% puhul 4,3; KA üle 40% puhul 4,7.
+- Kõrgema pH korral vähenevad punktid astmeliselt. Maisisilo pH hindamine ei muutu.
+- Hinnangus ja PDF-is näidatakse rohusilo pH juures kasutatud kuivaineklassi ja pH ülempiiri.
+- Uus vahemäluversioon sunnib iPhone'i GitHubist v4.9 failid laadima.
 
 V4.8 TINGLIK PIIMAKADU
 - Iga hinnatava silo juures kuvatakse lühike tinglik piimakao hinnang, mille alus on 12 kg silo kuivainet lehma kohta päevas.
@@ -54,7 +61,7 @@ V4.1 GITHUBI PARANDUS
 - Kõik vajalikud failid on ühes kaustas. GitHubis ei ole vaja alamkaustu luua.
 - PDF-i loomise failid on kaasas ning „Valmista PDF / prindi“ töötab iPhone'is.
 - Uus vahemäluversioon sunnib iPhone'i vana väljatrükki uuendama.
-- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.8“ järgi.
+- Õige versiooni tunneb programmi ülaosas teksti „Versioon 4.9“ järgi.
 
 V4 on tehtud võimalikult lihtsaks iPhone'i avakuvale paigaldamiseks.
 
